@@ -1,17 +1,45 @@
-/* Sidebar Default */
+/* General Styles */
+ body, html {
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    background-color: #ffdc5c;
+    color: #181818;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+
+
+/* Patterned Background */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(rgba(0, 0, 0, 0.1) 5%, transparent 10%);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Sidebar Default (Collapsed) */
 .sidebar {
     width: 70px;
-    height: calc(100vh - 50px); /* Adjusts height automatically below navbar */
+    height: 100%; /* Adjusted for mobile */
     background-color: #181818 !important;
     color: white !important;
     transition: width 0.3s ease-in-out;
+    position: fixed;
+    left: 0;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding-top: 10px;
-    overflow-x: hidden;
-    position: fixed;
-    top: 50px; /* Moves below navbar */
-    left: 0;
+    justify-content: space-between;
+    padding-top: 20px;
 }
 
 /* Expand Sidebar on Hover */
@@ -19,37 +47,217 @@
     width: 250px;
 }
 
-/* Make Sidebar Scrollable */
-.sidebar-content {
-    flex-grow: 1;
-    overflow-y: auto;
+/* Sidebar Logo */
+.sidebar .logo-container {
+    text-align: center;
+    padding: 10px 0;
 }
 
-/* Fix Main Content Alignment */
-.content {
-    margin-left: 70px;
+.sidebar .logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: white;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Sidebar Links */
+.sidebar a {
+    color: white !important;
+    font-size: 16px;
     padding: 20px;
-    transition: margin-left 0.3s ease-in-out;
-    margin-top: 50px; /* Ensures it starts below navbar */
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s ease-in-out;
+    white-space: nowrap;
 }
 
-/* Shift Content When Sidebar Expands */
-.sidebar:hover ~ .content {
-    margin-left: 250px;
+/* Sidebar Links on Hover */
+.sidebar a:hover {
+    background-color: #333 !important;
 }
 
-/* Mobile Fix */
+/* Sidebar Icons */
+.sidebar i {
+    min-width: 40px; /* Ensures uniform spacing */
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Sidebar Text (Hidden When Collapsed) */
+.sidebar .nav-text {
+    display: none;
+    margin-left: 10px; /* Add spacing between icon and text */
+    transition: opacity 0.2s ease-in-out;
+}
+/* Show Text When Sidebar Expands */
+.sidebar:hover .nav-text,
+.sidebar.open .nav-text {
+    display: inline-block !important;
+    opacity: 1;
+}
+
+/* Logout Button */
+.logout {
+    margin: 20px auto;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    background-color: #d9534f; /* Red */
+    width: 80%;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout:hover {
+    background-color: #c9302c;
+}
+
+/* Logout Icon (Visible Only When Collapsed) */
+.logout .logout-text {
+    display: none;
+}
+
+.sidebar:hover .logout .logout-text {
+    display: inline-block;
+}
+
+/* Show Only Icon When Collapsed */
+.logout i {
+    font-size: 18px;
+}
+
+/* Main Content */
+.content {
+  margin-left: 70px;
+  padding: 20px;
+  transition: margin-left 0.3s ease-in-out;
+  position: relative; /* Ensures proper layout */
+}
+
+/* Shift content when sidebar expands */
+  .sidebar:hover ~ .content,
+  .sidebar.open ~ .content {
+      margin-left: 250px;
+  }
+/* Mobile Navbar */
+.navbar {
+    display: none;
+    background-color: #181818;
+    color: white;
+    padding: 10px 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Burger Menu */
+.burger {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    width: 30px;
+}
+
+.burger div {
+    width: 30px;
+    height: 4px;
+    background-color: white;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+/* Burger Animation */
+.burger.active div:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.burger.active div:nth-child(2) {
+    opacity: 0;
+}
+
+.burger.active div:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Active Sidebar Link */
+.sidebar a.active, .sidebar a.active:hover {
+    background-color: #444 !important; /* Highlight color */
+    font-weight: bold;
+    border-left: 4px solid #ffdc5c; /* Yellow accent border */
+}
+
+/* Collapse Button (Bottom-Right) */
+.collapse-button {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    right: -10px; /* Moves it outside the sidebar */
+    background: #333;
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, background 0.2s;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+}
+
+/* Adjust position when sidebar is collapsed */
+.sidebar.collapsed .collapse-button {
+    right: -35px; /* Keeps it aligned outside */
+}
+
+/* Rotate icon when sidebar is collapsed */
+.sidebar.collapsed .collapse-button i {
+    transform: rotate(180deg);
+}
+
+/* Change background color on hover */
+.collapse-button:hover {
+    background: #444;
+}
+
+
+/* Mobile Sidebar */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 0;
-        height: calc(100vh - 50px); /* Adjusted height */
-    }
+  .navbar {
+    display: flex;
+  }
 
-    .sidebar.open {
-        width: 250px;
-    }
+  .collapse-button {
+    display: flex;
+  }
 
-    .content {
-        margin-left: 0;
-    }
+  .sidebar {
+    width: 250px;
+    left: -250px; /* Initially hidden */
+    position: fixed;
+    height: 100%;
+    transition: left 0.3s ease-in-out;
+    z-index: 1100;
+}
+
+/* Show sidebar when opened */
+.sidebar.open {
+    left: 0;
+}
+
+/* Prevent content from shifting */
+.content {
+    margin-left: 0 !important;
+    margin-top: 50px;
+}
 }

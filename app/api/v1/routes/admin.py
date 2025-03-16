@@ -7,8 +7,3 @@ from app.models.models import User
 from app.models.database import db_session
 
 router = APIRouter(prefix="/admin")
-
-@router.get('/', response_class=HTMLResponse)
-async def admin_page(request: Request):
-    """Render the admin page."""
-    return templates.TemplateResponse('/admin/admin.html', {'request': request})

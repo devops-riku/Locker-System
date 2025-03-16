@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card lock-card">
+        <h2 class="card-title mb-5">Unlock your locker</h2>
+        <div class="lock-container" id="lock-toggle">
+            <div class="shackle"></div>
+            
+        </div>
+        <div class="countdown" id="countdown"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+    $("#lock-toggle").on("click", function() {
+        let $lockContainer = $(this);
+        let $lockBody = $lockContainer.find(".lock-body i");
+        let $shackle = $lockContainer.find(".shackle");
+        let $countdown = $("#countdown");
+
+        if (!$lockContainer.hasClass("unlocked")) {
+            // Unlock Animation
+            $lockContainer.addClass("unlocked");
+            $lockBody.removeClass("fa-lock relock").addClass("fa-unlock");
+            $shackle.addClass("shackle-unlock");
+
+            // Countdown Animation
+            let counter = 3;
+            $countdown.text("Automatically locks in " + counter + "s").addClass("show");
+
+            let countdownInterval = setInterval(() => {
+                counter--;
+                if (counter > 0) {
+                    $countdown.text("Automatically locks in " + counter + "s");
+                } else {
+                    clearInterval(countdownInterval);
+
+                    // Lock Animation
+                    $lockContainer.removeClass("unlocked");
+                    $lockBody.removeClass("fa-unlock").addClass("fa-lock relock");
+                    $shackle.removeClass("shackle-unlock");
+
+                    // Hide Countdown
+                    $countdown.removeClass("show");
+                }
+            }, 1000);
+        }
+    });
+});
+
+</script>
+{% endblock %}

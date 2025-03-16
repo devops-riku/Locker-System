@@ -1,0 +1,142 @@
+/* Prevent Scrolling */
+html, body {
+    height: 100%;
+    overflow: hidden; /* Disable vertical scrolling */
+    margin: 0;
+    padding: 0;
+}
+
+/* Center the Card on the Screen */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    width: 100vw; /* Full viewport width */
+    padding: 20px;
+}
+
+/* Card Styling */
+.lock-card {
+    width: 90%;
+    max-width: 400px;
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Lock Container */
+.lock-container {
+    width: 100px;
+    height: 110px;
+    background-color: #181818;
+    color: #ffdc5c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    border-radius: 20px 20px 50px 50px;
+    cursor: pointer;
+    font-size: 40px;
+    margin: auto;
+    position: relative;
+    transition: background 0.3s ease-in-out;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Unlock Effect */
+.lock-container.unlocked {
+    background-color: #4caf50; /* Green */
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.7);
+}
+
+/* Lock Body */
+.lock-body {
+    width: 70px;
+    height: 50px;
+    background: #181818;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Lock Icon Animation */
+.lock-body i {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Unlock Icon Rotation */
+.lock-container.unlocked .lock-body i {
+    transform: rotate(180deg);
+}
+
+/* Shackle (U-shape) */
+.shackle {
+    width: 60px;
+    height: 30px;
+    border: 8px solid #181818;
+    border-bottom: none;
+    border-radius: 60px 60px 0 0;
+    position: absolute;
+    top: -25px;
+    transition: transform 0.4s ease-in-out;
+}
+
+/* Unlock Animation - Moves Up and Rotates */
+.shackle-unlock {
+    transform: translateY(-20px);
+    transform-origin: left bottom; /* Makes it rotate from the left */
+}
+/* Countdown Text */
+.countdown {
+    font-size: 14px;
+    margin-top: 10px;
+    color: #ffdc5c;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Show Countdown */
+.countdown.show {
+    opacity: 1;
+}
+
+
+/* Shining Effect */
+@keyframes shine {
+    0% {
+        opacity: 0.2;
+        transform: translateX(-50px) rotate(20deg);
+    }
+    50% {
+        opacity: 0.6;
+        transform: translateX(30px) rotate(10deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(80px) rotate(0deg);
+    }
+}
+
+/* Add a pseudo-element to create the shine */
+.lock-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50px;
+    width: 120%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: rotate(30deg);
+    opacity: 0;
+}
+
+/* Activate shine effect on unlock */
+.lock-container.unlocked::before {
+    animation: shine 0.6s ease-in-out;
+}

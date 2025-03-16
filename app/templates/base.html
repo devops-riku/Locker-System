@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} | Locker System</title>
+
+    <!-- Halfmoon CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.2/css/halfmoon.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/app/static/css/padlock.css">
+    <link rel="stylesheet" href="/app/static/css/base.css">
+    {% block head %}{% endblock %}
+
+</head>
+<body>
+
+    <!-- Mobile Navbar -->
+    <div class="navbar">
+        <div class="burger" onclick="toggleSidebar()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <!-- Logout Button -->
+        <div onclick="logout()">
+          <span class="logout-text">Logout</span>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div>
+            <!-- Logo -->
+            <div class="logo-container mb-3">
+                <img src="https://cdn.statically.io/avatar/foo" alt="Logo" class="logo">
+            </div>
+
+            <!-- Navigation Links -->
+            <a href="#" class="active"><i class="fa-solid fa-table-columns"></i><span class="nav-text"> Dashboard</span></a>
+            <a href="#"><i class="fa-solid fa-user"></i><span class="nav-text">Profile</span></a>
+            <a href="#"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-text">History</span></a>
+            <a href="#"><i class="fa-solid fa-gear"></i><span class="nav-text">Settings</span></a>
+        </div>
+
+        <!-- Collapse Button at Bottom-Right -->
+        <div class="collapse-button" onclick="toggleSidebar()">
+            <i class="fa-solid fa-chevron-left"></i>
+        </div>
+    </nav>
+
+
+
+    <!-- Main Content -->
+    <main class="content" id="main-content">
+       {% block content %}{% endblock %}     
+
+    </main>
+
+    <!-- JavaScript for Sidebar & Burger Animation -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/app/static/js/base.js"></script>
+    
+    {% block script %}{% endblock %}
+  
+
+</body>
+</html>

@@ -13,3 +13,8 @@ async def login_page(request: Request):
     """Render the login page."""
     return templates.TemplateResponse('login.html', {'request': request})
 
+
+@router.get('/home')
+async def home_page(request: Request):
+    return templates.TemplateResponse('index.html', {'request': request})
+
