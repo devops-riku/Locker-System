@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dark Collapsible Sidebar</title>
+
+    <!-- Halfmoon CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.2/css/halfmoon.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+    <!-- Custom Styles -->
+    <style>
+        /* General Styles */
+        body {
+            background-color: #ffdc5c;
+            color: #181818;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Patterned Background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.1) 5%, transparent 10%);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* Sidebar Default (Collapsed) */
+        .sidebar {
+            width: 70px;
+            height: 100%; /* Adjusted for mobile */
+            background-color: #181818 !important;
+            color: white !important;
+            transition: width 0.3s ease-in-out;
+            position: fixed;
+            left: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-top: 20px;
+        }
+
+        /* Expand Sidebar on Hover */
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        /* Sidebar Logo */
+        .sidebar .logo-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .sidebar .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: white;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Sidebar Links */
+        .sidebar a {
+            color: white !important;
+            font-size: 16px;
+            padding: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s ease-in-out;
+            white-space: nowrap;
+        }
+
+        /* Sidebar Links on Hover */
+        .sidebar a:hover {
+            background-color: #333 !important;
+        }
+
+        /* Sidebar Icons */
+        .sidebar i {
+            min-width: 40px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        /* Sidebar Text (Hidden When Collapsed) */
+        .sidebar .nav-text {
+            display: none;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        /* Show Text When Sidebar Expands */
+        .sidebar:hover .nav-text,
+        .sidebar.open .nav-text {
+            display: inline-block !important;
+            opacity: 1;
+        }
+
+        /* Logout Button */
+        .logout {
+            margin: 20px auto;
+            padding: 10px;
+            text-align: center;
+            color: white;
+            background-color: #d9534f; /* Red */
+            width: 80%;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout:hover {
+            background-color: #c9302c;
+        }
+
+        /* Logout Icon (Visible Only When Collapsed) */
+        .logout .logout-text {
+            display: none;
+        }
+
+        .sidebar:hover .logout .logout-text {
+            display: inline-block;
+        }
+
+        /* Show Only Icon When Collapsed */
+        .logout i {
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .content {
+          margin-left: 70px;
+          padding: 20px;
+          transition: margin-left 0.3s ease-in-out;
+          position: relative; /* Ensures proper layout */
+      }
+
+        /* Shift content when sidebar expands */
+          .sidebar:hover ~ .content,
+          .sidebar.open ~ .content {
+              margin-left: 250px;
+          }
+        /* Mobile Navbar */
+        .navbar {
+            display: none;
+            background-color: #181818;
+            color: white;
+            padding: 10px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Burger Menu */
+        .burger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            width: 30px;
+        }
+
+        .burger div {
+            width: 30px;
+            height: 4px;
+            background-color: white;
+            margin: 4px 0;
+            transition: 0.3s;
+        }
+
+        /* Burger Animation */
+        .burger.active div:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .burger.active div:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger.active div:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* Mobile Sidebar */
+        @media (max-width: 768px) {
+          .navbar {
+            display: flex;
+          }
+
+            .sidebar {
+                width: 0;        
+                display: bk;     
+                top: 50px;   
+            }
+            
+          
+            .sidebar.open {
+                width: 250px;
+            }
+
+            .content {
+                margin-left: 0;
+                margin-top: 50px;
+            }
+
+            .logout .logout-text {
+                display: inline-block; /* Show logout text on mobile */
+            }
+        }
+
+        /* Active Sidebar Link */
+.sidebar a.active, .sidebar a.active:hover {
+  background-color: #444 !important; /* Highlight color */
+  font-weight: bold;
+  border-left: 4px solid #ffdc5c; /* Yellow accent border */
+}
+    </style>
+</head>
+<body>
+
+    <!-- Mobile Navbar -->
+    <div class="navbar">
+        <div class="burger" onclick="toggleSidebar()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <!-- Logout Button -->
+        <div onclick="logout()">
+          <span class="logout-text">Logout</span>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div>
+            <!-- Logo -->
+            <div class="logo-container mb-3">
+                <img src="https://cdn.statically.io/avatar/foo" alt="Logo" class="logo">
+            </div>
+
+            <!-- Navigation Links -->
+            <a href="#" class="active"><i class="fa-solid fa-table-columns"></i> <span class="nav-text">Dashboard</span></a>
+            <a href="#"><i class="fa-solid fa-user"></i><span class="nav-text">Profile</span></a>
+            <a href="#"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-text">History</span></a>
+            <a href="#"><i class="fa-solid fa-gear"></i><span class="nav-text">Settings</span></a>
+        </div>
+
+        
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content" id="main-content">
+        <h1>Welcome</h1>
+        <p>My Contents Here ~Riku.</p>
+        <div class="card">
+          <div class="card-body">
+              <h5 class="card-title">Basic Card</h5>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">First</th>
+                    <th scope="col">Last</th>
+                    <th scope="col" class="text-end">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">1</th>
+                    <td>Johnathan</td>
+                    <td>Gates</td>
+                    <td class="text-end">25</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">2</th>
+                    <td>Melissa</td>
+                    <td>Waters</td>
+                    <td class="text-end">27</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">3</th>
+                    <td colspan="2">Jack the Sleeper</td>
+                    <td class="text-end">???</td>
+                  </tr>
+                </tbody>
+              </table>
+          </div>
+      </div>
+      
+
+    </main>
+
+    <!-- JavaScript for Sidebar & Burger Animation -->
+    <script>
+        function toggleSidebar() {
+            let sidebar = document.getElementById("sidebar");
+            let burger = document.querySelector(".burger");
+
+            if (sidebar.classList.contains("open")) {
+                sidebar.classList.remove("open");
+                burger.classList.remove("active");
+            } else {
+                sidebar.classList.add("open");
+                burger.classList.add("active");
+            }
+        }
+
+        function logout() {
+            alert("Logging out...");
+            // Implement logout logic here
+        }
+    </script>
+
+</body>
+</html>

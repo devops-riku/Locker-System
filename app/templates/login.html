@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Locker System</title>
+
+    <!-- Halfmoon CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/halfmoon/css/halfmoon.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <style>       
+        /* Apply a modern font */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffdc5c;
+            opacity: 0.8;
+            background-image: radial-gradient(#444cf7 0.5px, transparent 0.5px), radial-gradient(#444cf7 0.5px, #ffdc5c 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0,10px 10px;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 15px;
+        }
+
+        /* Centering the sign-in form */
+        .login-container {
+            max-width: 380px;
+            width: 100%;
+            padding: 2rem;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto;
+            width: 80px;
+            height: auto;
+        }
+
+        /* Full-width button with modern styling */
+        .btn-full {
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-black {
+            background-color: black !important;
+            color: white !important;
+            border: none;
+        }
+
+        .btn-black:hover {
+            background-color: #444 !important; /* Darker black on hover */
+        }
+
+        /* Welcome text */
+        .welcome-text {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        /* Divider with lines */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .divider span {
+            padding: 0 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Form Inputs */
+        .form-control {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 400px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+            .welcome-text {
+                font-size: 20px;
+            }
+            .btn-full {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container animate__animated animate__fadeIn">
+        <img src="https://img.freepik.com/free-vector/locker_53876-25496.jpg" alt="Logo" class="logo animate__animated animate__zoomIn">
+
+        <!-- Welcome Message -->
+        <h1 class="welcome-text animate__animated animate__fadeInDown">Welcome to Locker System</h1>
+
+        <!-- Divider -->
+        <div class="divider">
+            <span>Sign In with Email</span>
+        </div>
+
+        <div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" class="form-control" id="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group mt-2">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+            </div>
+
+            <div class="d-flex text-center mt-3">
+                <button type="button" class="btn btn-full btn-black animate__animated animate__pulse" onclick="signIn()" id="signInButton">Sign In</button>
+            </div>            
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="#">Forgot password?</a>
+        </div>
+    </div>
+
+    <!-- Load Libraries in Proper Order -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/halfmoon/js/halfmoon.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "preventDuplicates": true,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+        });
+        
+        function signIn() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const signInButton = document.getElementById("signInButton"); // Get the button
+        
+            if (!email) {
+                toastr.warning("Please enter your email!");
+                return;
+            }
+            if (!password) {
+                toastr.warning("Please enter your password!");
+                return;
+            }
+        
+            // Disable button & show loading state
+            signInButton.disabled = true;
+            signInButton.innerHTML = "Signing in...";
+        
+            axios.post('/api/v1/auth/login', { email, password })
+                .then(response => {
+                    if (response.data.message) {
+                        toastr.success(response.data.message);
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1500);
+                    } else {
+                        toastr.error("Unexpected response from server.");
+                        signInButton.disabled = false; // Re-enable on failure
+                        signInButton.innerHTML = "Sign In";
+                    }
+                })
+                .catch(error => {
+                    let errorMessage = 'An unexpected error occurred. Please try again.';
+        
+                    if (error.response) {
+                        errorMessage = error.response.data.detail || 'Invalid credentials.';
+                    } else if (error.request) {
+                        errorMessage = 'No response from server. Check your network connection.';
+                    }
+                    
+        
+                    toastr.error(errorMessage);
+                    signInButton.disabled = false; // Re-enable on failure
+                    signInButton.innerHTML = "Sign In";
+                });
+        }
+        
+    </script>
+
+</body>
+</html>

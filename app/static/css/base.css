@@ -1,0 +1,55 @@
+/* Sidebar Default */
+.sidebar {
+    width: 70px;
+    height: calc(100vh - 50px); /* Adjusts height automatically below navbar */
+    background-color: #181818 !important;
+    color: white !important;
+    transition: width 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    overflow-x: hidden;
+    position: fixed;
+    top: 50px; /* Moves below navbar */
+    left: 0;
+}
+
+/* Expand Sidebar on Hover */
+.sidebar:hover {
+    width: 250px;
+}
+
+/* Make Sidebar Scrollable */
+.sidebar-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* Fix Main Content Alignment */
+.content {
+    margin-left: 70px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    margin-top: 50px; /* Ensures it starts below navbar */
+}
+
+/* Shift Content When Sidebar Expands */
+.sidebar:hover ~ .content {
+    margin-left: 250px;
+}
+
+/* Mobile Fix */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        height: calc(100vh - 50px); /* Adjusted height */
+    }
+
+    .sidebar.open {
+        width: 250px;
+    }
+
+    .content {
+        margin-left: 0;
+    }
+}
