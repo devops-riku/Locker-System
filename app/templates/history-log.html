@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+
+{% endblock %}
+
+{% block content %}
+<style>
+    #print-button {
+        background-color: #007e13;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    #print-button:hover {
+        background-color: #034b00;
+    }
+</style>
+<div>
+    <h1 for="example-textarea-1" class="form-label">History</h1>
+    <hr style="height:2px;border-width:0;color:gray;background-color:gray">
+</div>
+
+<iframe id="print-iframe" style="display: none;"></iframe>
+<button id="print-button"><i class="fa-solid fa-print"></i> Print
+</button>
+
+
+<div id="grid-table"></div>
+
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("https://jsonplaceholder.typicode.com/users")
+            .then(response => response.json())
+            .then(data => {
+                const formattedData = data.map(user => [
+                    user.id, 
+                    user.name, 
+                    user.username, 
+                    user.email
+                ]);
+    
+                const grid = new gridjs.Grid({
+                    columns: ["ID", "Name", "Username", "Email"],
+                    data: formattedData,
+                    sort: true,
+                    pagination: { limit: 5 },
+                    search: true,
+                    resizable: true
+                }).render(document.getElementById("grid-table"));
+    
+                // Add print functionality
+                document.getElementById("print-button").addEventListener("click", () => {
+                    fetch("https://jsonplaceholder.typicode.com/users")
+                        .then(response => response.json())
+                        .then(data => {
+                            let tableHtml = `
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            `;
+                
+                            data.forEach(user => {
+                                tableHtml += `
+                                    <tr>
+                                        <td>${user.id}</td>
+                                        <td>${user.name}</td>
+                                        <td>${user.username}</td>
+                                        <td>${user.email}</td>
+                                    </tr>
+                                `;
+                            });
+                
+                            tableHtml += `</tbody></table>`;
+    
+                            const printIframe = document.getElementById("print-iframe").contentWindow;
+                            printIframe.document.body.innerHTML = `
+                                <style>
+                                    @media print {
+                                        body { font-family: Arial, sans-serif; }
+                                        table { width: 100%; border-collapse: collapse; }
+                                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                                        th { background-color: #f8f9fa; }
+                                    }
+                                </style>
+                                <h2>Record Report</h2>
+                                ${tableHtml}
+                            `;
+    
+                            printIframe.focus();
+                            printIframe.print();
+                        })
+                        .catch(error => {
+                            console.error("Error fetching data:", error);
+                            iziToast.error({
+                                title: "Error",
+                                message: "Failed to load print data. Please check your connection.",
+                                position: "topRight"
+                            });
+                        });
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                iziToast.error({
+                    title: "Error",
+                    message: "Failed to load user data. Please try again later.",
+                    position: "topRight"
+                });
+            });
+    });
+    
+</script>
+<script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+{% endblock %}

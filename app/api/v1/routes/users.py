@@ -22,3 +22,15 @@ async def home_page(request: Request):
 @router.get('/profile')
 async def profile_page(request: Request):
     return templates.TemplateResponse('profile.html', {'request': request})
+
+@router.get('/reset-password')
+async def reset_password(request: Request):
+    return templates.TemplateResponse('reset-password.html', {'request': request})
+
+@router.get('/log-history')
+async def reset_password(request: Request):
+    return templates.TemplateResponse('history-log.html', {'request': request})
+
+@router.get('/users')
+async def reset_password(request: Request):
+    return templates.TemplateResponse('user-lists.html', {'request': request})
