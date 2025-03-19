@@ -18,3 +18,7 @@ async def login_page(request: Request):
 async def home_page(request: Request):
     return templates.TemplateResponse('index.html', {'request': request})
 
+
+@router.get('/profile')
+async def profile_page(request: Request):
+    return templates.TemplateResponse('profile.html', {'request': request})

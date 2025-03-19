@@ -7,13 +7,22 @@
 
     <!-- Halfmoon CSS -->
     <link href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.2/css/halfmoon.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/app/static/css/padlock.css">
     <link rel="stylesheet" href="/app/static/css/base.css">
     {% block head %}{% endblock %}
-
 </head>
 <body>
+    <!-- Navbar -->
+<nav class="navbar">
+    <div class="container-fluid d-flex justify-content-center">
+        <!-- Logo -->
+        <a href="#" class="navbar-brand">
+            <img src="https://via.placeholder.com/120x40" alt="Logo" class="logo">
+        </a>
+    </div>
+</nav>
 
     <!-- Mobile Navbar -->
     <div class="navbar">
@@ -30,7 +39,7 @@
 
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
-        <div>
+        <div class="sidebar-content">
             <!-- Logo -->
             <div class="logo-container mb-3">
                 <img src="https://cdn.statically.io/avatar/foo" alt="Logo" class="logo">
@@ -43,26 +52,28 @@
             <a href="#"><i class="fa-solid fa-gear"></i><span class="nav-text">Settings</span></a>
         </div>
 
+        <!-- Logout Button Stuck to Bottom -->
+        <div class="sidebar-footer">
+            <a href="#" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> <span class="nav-text">Logout</span></a>
+        </div>
+
         <!-- Collapse Button at Bottom-Right -->
         <div class="collapse-button" onclick="toggleSidebar()">
             <i class="fa-solid fa-chevron-left"></i>
         </div>
     </nav>
 
-
-
     <!-- Main Content -->
     <main class="content" id="main-content">
-       {% block content %}{% endblock %}     
-
+        {% block content %}{% endblock %}
     </main>
 
+  
     <!-- JavaScript for Sidebar & Burger Animation -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="/app/static/js/base.js"></script>
     
     {% block script %}{% endblock %}
-  
 
 </body>
 </html>

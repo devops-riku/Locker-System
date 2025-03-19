@@ -3,19 +3,100 @@
 {% block head %}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<style>
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 90vh;
+    }
+    
+
+    .lock-card {
+    position: relative;
+    width: 300px;
+    height: 350px;
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Aligns title to the top */
+    padding-top: 20px; /* Adjust spacing */
+
+    background: rgba( 255, 255, 255, 0.35 );
+    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.2);
+    backdrop-filter: blur( 11px );
+    -webkit-backdrop-filter: blur( 11px );
+    border-radius: 10px;
+    border: 1px solid rgba( 255, 255, 255, 0.18 );
+    }
+
+    .card-title {
+        margin-top: 20px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    /* Countdown Progress Bar */
+    .progress-container {
+        width: 100%;
+        height: 10px;
+        background: #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 20px;
+        display: none;
+    }
+
+    .progress-bar {
+        height: 100%;
+        width: 100%;
+        background: #ff5b5b;
+        transition: width 1s linear;
+    }
+    .card-title {
+    background: #2c2c2c; /* Dark Gray */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    display: inline-block;
+    margin-bottom: 15px;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="card lock-card">
-        <h2 class="card-title mb-5">Unlock your locker</h2>
-        <div class="lock-container" id="lock-toggle">
-            <div class="shackle"></div>
+        <h2 class="card-title mt-6">TOGGLE TO UNLOCK</h2>
+
+        <!-- Lock Button (Initially Locked) -->
+        <input id="inpLock" type="checkbox" checked>
+        <label class="btn-lock" for="inpLock">
+            <svg width="100" height="100" viewBox="0 0 28 40">
+                <path class="lockb" d="M27 27C27 34.1797 21.1797 40 14 40C6.8203 40 1 34.1797 1 27C1 19.8203 6.8203 14 14 14C21.1797 14 27 19.8203 27 27ZM15.6298 26.5191C16.4544 25.9845 17 25.056 17 24C17 22.3431 15.6569 21 14 21C12.3431 21 11 22.3431 11 24C11 25.056 11.5456 25.9845 12.3702 26.5191L11 32H17L15.6298 26.5191Z"></path>
+                <path class="lock" d="M6 21V10C6 5.58172 9.58172 2 14 2V2C18.4183 2 22 5.58172 22 10V21"></path>
+                <path class="bling" d="M29 20L31 22"></path>
+                <path class="bling" d="M31.5 15H34.5"></path>
+                <path class="bling" d="M29 10L31 8"></path>
+            </svg>
             
+        </label>
+
+        <!-- Countdown Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar"></div>
         </div>
-        <div class="countdown" id="countdown"></div>
+
+        <!-- Countdown Text -->
+        <div class="countdown mt-2" id="countdown"></div>
     </div>
 </div>
 {% endblock %}
@@ -23,41 +104,43 @@
 {% block script %}
 <script>
     $(document).ready(function() {
-    $("#lock-toggle").on("click", function() {
-        let $lockContainer = $(this);
-        let $lockBody = $lockContainer.find(".lock-body i");
-        let $shackle = $lockContainer.find(".shackle");
+        let $lock = $("#inpLock");
         let $countdown = $("#countdown");
+        let $progressContainer = $(".progress-container");
+        let $progressBar = $(".progress-bar");
 
-        if (!$lockContainer.hasClass("unlocked")) {
-            // Unlock Animation
-            $lockContainer.addClass("unlocked");
-            $lockBody.removeClass("fa-lock relock").addClass("fa-unlock");
-            $shackle.addClass("shackle-unlock");
+        $lock.on("change", function() {
+            if (!$lock.is(":checked")) { 
+                console.log("Locker UNLOCKED"); // Log unlocked state
+                
+                // Disable the lock button while countdown is active
+                $lock.prop("disabled", true);
 
-            // Countdown Animation
-            let counter = 3;
-            $countdown.text("Automatically locks in " + counter + "s").addClass("show");
+                // Start Countdown
+                let counter = 3;
+                $countdown.text("Automatically locking in " + counter + "s");
+                $progressContainer.show();
+                $progressBar.css("width", "100%");
 
-            let countdownInterval = setInterval(() => {
-                counter--;
-                if (counter > 0) {
-                    $countdown.text("Automatically locks in " + counter + "s");
-                } else {
-                    clearInterval(countdownInterval);
+                let countdownInterval = setInterval(() => {
+                    counter--;
+                    if (counter > 0) {
+                        $countdown.text("Automatically locking in " + counter + "s");
+                        $progressBar.css("width", (counter / 10) * 100 + "%");
+                    } else {
+                        clearInterval(countdownInterval);
 
-                    // Lock Animation
-                    $lockContainer.removeClass("unlocked");
-                    $lockBody.removeClass("fa-unlock").addClass("fa-lock relock");
-                    $shackle.removeClass("shackle-unlock");
-
-                    // Hide Countdown
-                    $countdown.removeClass("show");
-                }
-            }, 1000);
-        }
+                        // Relock after countdown
+                        $lock.prop("checked", true);
+                        $lock.prop("disabled", false); // Re-enable after 3s
+                        console.log("Locker LOCKED"); // Log locked state
+                        $countdown.text("");
+                        $progressContainer.hide();
+                        $progressBar.css("width", "100%");
+                    }
+                }, 1000);
+            }
+        });
     });
-});
-
 </script>
 {% endblock %}

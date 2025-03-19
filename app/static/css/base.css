@@ -1,11 +1,7 @@
 /* General Styles */
  body, html {
-    margin: 0;
-    padding: 0;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    background-color: #ffdc5c;
+    font-family: 'Poppins', sans-serif;
+    background-color: #d9fb93;
     color: #181818;
     transition: margin-left 0.3s ease-in-out;
 }
@@ -20,7 +16,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(rgba(0, 0, 0, 0.1) 5%, transparent 10%);
+
     background-size: 40px 40px;
     opacity: 0.3;
     pointer-events: none;
@@ -62,6 +58,14 @@ body::before {
     margin: 0 auto;
 }
 
+.sidebar-footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    padding: 10px;
+}
+
+
 /* Sidebar Links */
 .sidebar a {
     color: white !important;
@@ -81,7 +85,7 @@ body::before {
 
 /* Sidebar Icons */
 .sidebar i {
-    min-width: 40px; /* Ensures uniform spacing */
+    min-width: 30px; /* Ensures uniform spacing */
     text-align: center;
     font-size: 18px;
 }
@@ -261,3 +265,5 @@ body::before {
     margin-top: 50px;
 }
 }
+
+
