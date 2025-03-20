@@ -44,3 +44,16 @@ function logout() {
     // Implement logout logic here
 }
 
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Get current page URL path
+    const currentPath = window.location.pathname;
+
+    // Loop through all sidebar links
+    document.querySelectorAll(".nav-link").forEach(link => {
+        if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active");
+        }
+    });
+});
+
