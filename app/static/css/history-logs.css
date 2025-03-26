@@ -1,0 +1,67 @@
+.card {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #252525;
+    border-bottom: 1px solid #333;
+}
+.card-title {
+    color: white;
+    font-size: 24px;
+    margin: 0;
+}
+.btn-print {
+    font-size: 1.1rem;
+    padding: 0.2rem 1rem;
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+.btn-print:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+.gridjs-wrapper {
+    border-color: #333 !important;
+}
+.gridjs-table th {
+    background-color: #252525 !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+}
+.gridjs-table td {
+    background-color: #1e1e1e !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+}
+.gridjs-footer {
+    background-color: #252525 !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+}
+.gridjs-pagination .gridjs-pages button {
+    background-color: #333 !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
+}
+.gridjs-pagination .gridjs-pages button:hover {
+    background-color: #444 !important;
+}
+.gridjs-search {
+    background-color: #333 !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
+    margin-top: 10px;
+}
+.gridjs-search::placeholder {
+    color: #888 !important;
+}
+
+.gridjs-summary {     
+    color: #e0e0e0 !important;
+}
