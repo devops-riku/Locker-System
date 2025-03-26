@@ -1,12 +1,10 @@
 /* General Styles */
- body, html {
+body, html {
     font-family: 'Poppins', sans-serif;
-    background-color: #d9fb93;
+    background-color: #ffdc5c;
     color: #181818;
     transition: margin-left 0.3s ease-in-out;
 }
-
-
 
 /* Patterned Background */
 body::before {
@@ -16,19 +14,28 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-
     background-size: 40px 40px;
     opacity: 0.3;
     pointer-events: none;
 }
 
-/* Sidebar Default (Collapsed) */
+/* For Edge */
+input::-ms-reveal {
+    display: none;
+  }
+  
+  /* For Chrome (if applicable in some custom UIs) */
+  input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+  }
+
+/* Sidebar Default (Always Open) */
 .sidebar {
-    width: 70px;
-    height: 100%; /* Adjusted for mobile */
+    width: 200px;
+    height: 100%;
     background-color: #181818 !important;
     color: white !important;
-    transition: width 0.3s ease-in-out;
     position: fixed;
     left: 0;
     overflow-x: hidden;
@@ -36,11 +43,6 @@ body::before {
     flex-direction: column;
     justify-content: space-between;
     padding-top: 20px;
-}
-
-/* Expand Sidebar on Hover */
-.sidebar:hover {
-    width: 250px;
 }
 
 /* Sidebar Logo */
@@ -65,12 +67,11 @@ body::before {
     padding: 10px;
 }
 
-
 /* Sidebar Links */
 .sidebar a {
     color: white !important;
-    font-size: 16px;
-    padding: 20px;
+    font-size: 14px;
+    padding: 15px;
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -90,17 +91,9 @@ body::before {
     font-size: 18px;
 }
 
-/* Sidebar Text (Hidden When Collapsed) */
+/* Sidebar Text */
 .sidebar .nav-text {
-    display: none;
     margin-left: 10px; /* Add spacing between icon and text */
-    transition: opacity 0.2s ease-in-out;
-}
-/* Show Text When Sidebar Expands */
-.sidebar:hover .nav-text,
-.sidebar.open .nav-text {
-    display: inline-block !important;
-    opacity: 1;
 }
 
 /* Logout Button */
@@ -123,33 +116,14 @@ body::before {
     background-color: #c9302c;
 }
 
-/* Logout Icon (Visible Only When Collapsed) */
-.logout .logout-text {
-    display: none;
-}
-
-.sidebar:hover .logout .logout-text {
-    display: inline-block;
-}
-
-/* Show Only Icon When Collapsed */
-.logout i {
-    font-size: 18px;
-}
-
 /* Main Content */
 .content {
-  margin-left: 70px;
-  padding: 20px;
-  transition: margin-left 0.3s ease-in-out;
-  position: relative; /* Ensures proper layout */
+    margin-left: 200px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    position: relative; /* Ensures proper layout */
 }
 
-/* Shift content when sidebar expands */
-  .sidebar:hover ~ .content,
-  .sidebar.open ~ .content {
-      margin-left: 250px;
-  }
 /* Mobile Navbar */
 .navbar {
     display: none;
@@ -201,7 +175,6 @@ body::before {
     border-left: 4px solid #ffdc5c; /* Yellow accent border */
 }
 
-/* Collapse Button (Bottom-Right) */
 .collapse-button {
     display: none;
     position: absolute;
@@ -219,33 +192,18 @@ body::before {
     height: 30px;
 }
 
-/* Adjust position when sidebar is collapsed */
-.sidebar.collapsed .collapse-button {
-    right: -35px; /* Keeps it aligned outside */
-}
-
-/* Rotate icon when sidebar is collapsed */
-.sidebar.collapsed .collapse-button i {
-    transform: rotate(180deg);
-}
-
-/* Change background color on hover */
-.collapse-button:hover {
-    background: #444;
-}
-
-
+/* Mobile Sidebar */
 /* Mobile Sidebar */
 @media (max-width: 768px) {
-  .navbar {
+.navbar {
     display: flex;
-  }
+}
 
-  .collapse-button {
+.collapse-button {
     display: flex;
-  }
+}
 
-  .sidebar {
+.sidebar {
     width: 250px;
     left: -250px; /* Initially hidden */
     position: fixed;
@@ -273,6 +231,4 @@ hr {
     margin-right: auto;
     border-style: inset;
     border-width: 1px;
-  }     
-
-
+}     

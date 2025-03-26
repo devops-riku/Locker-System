@@ -6,10 +6,14 @@ class UserLoginRequest(BaseModel):
     password: str = Field(..., min_length=6, max_length=50)
 
 
-class UserRegisterRequest(BaseModel):
+class CreateUserRequest(BaseModel):
     first_name: str = Field(...)
     last_name: str = Field(...)
+    id_number: str = Field(...)
+    address: str = Field(...)
     email: str = Field(...)
     password: str = Field(...)
-    uid: str = Field(...)
-    pin: int = Field(..., min_length=4, max_digits=9999)
+    locker_number: int = Field(...)
+    rfid_serial_number: str = Field(...)
+    pin_number: int = Field(..., ge=0000, le=9999) 
+

@@ -5,71 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<style>
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 90vh;
-    }
-    
-
-    .lock-card {
-    position: relative;
-    width: 300px;
-    height: 350px;
-    text-align: center;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; /* Aligns title to the top */
-    padding-top: 20px; /* Adjust spacing */
-
-    background: rgba( 255, 255, 255, 0.35 );
-    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.2);
-    backdrop-filter: blur( 11px );
-    -webkit-backdrop-filter: blur( 11px );
-    border-radius: 10px;
-    border: 1px solid rgba( 255, 255, 255, 0.18 );
-    }
-
-    .card-title {
-        margin-top: 20px;
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    /* Countdown Progress Bar */
-    .progress-container {
-        width: 100%;
-        height: 10px;
-        background: #ddd;
-        border-radius: 5px;
-        overflow: hidden;
-        margin-top: 20px;
-        display: none;
-    }
-
-    .progress-bar {
-        height: 100%;
-        width: 100%;
-        background: #ff5b5b;
-        transition: width 1s linear;
-    }
-    .card-title {
-    background: #2c2c2c; /* Dark Gray */
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 18px;
-    font-weight: 600;
-    text-align: center;
-    display: inline-block;
-    margin-bottom: 15px;
-    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
-}
-</style>
+<link rel="stylesheet" href="/app/static/css/my-locker.css">
 {% endblock %}
 
 {% block content %}
