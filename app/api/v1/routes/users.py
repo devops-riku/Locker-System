@@ -19,9 +19,14 @@ async def profile_page(request: Request):
     user = get_user_by_id(1)  # Replace with actual user fetching logic
     return templates.TemplateResponse('profile.html', {'request': request, "user": user})
 
-@router.get('/reset-password')
+
+@router.get('/reset-email-password')
 async def reset_password_page(request: Request):
-    return templates.TemplateResponse('reset-password.html', {'request': request})
+    return templates.TemplateResponse('reset-email-password.html', {'request': request})
+
+@router.get('/new-password')
+async def new_password_page(request: Request):
+    return templates.TemplateResponse('new-password.html', {'request': request})
 
 @router.get('/history')
 async def history_page(request: Request):

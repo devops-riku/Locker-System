@@ -22,3 +22,8 @@ class AddLockerRequest(BaseModel):
     locker_name: str = Field(...)
     relay_pin: int = Field(...)
     is_available: bool = Field(True)
+
+
+class RequestEmailResetPassword(BaseModel):
+    email: str = Field(...)
+
