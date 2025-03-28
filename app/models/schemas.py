@@ -17,3 +17,8 @@ class CreateUserRequest(BaseModel):
     rfid_serial_number: str = Field(...)
     pin_number: int = Field(..., ge=0000, le=9999) 
 
+
+class AddLockerRequest(BaseModel):
+    locker_name: str = Field(...)
+    relay_pin: int = Field(...)
+    is_available: bool = Field(True)

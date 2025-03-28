@@ -1,12 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
-from app.core.config import get_supabase_client
 from app.models.database import db_session
 from app.models.schemas import *
 from app.models.models import *
-from app.core.config import templates
-from app.services.admin_service import CreateUser
-from sqlalchemy.orm import joinedload
+from app.services.admin_service import AddLocker, CreateUser, get_all_lockers
 
 
 router = APIRouter(prefix="/admin")
@@ -19,7 +15,7 @@ async def create_user(user: CreateUserRequest, request: Request):
 
 @router.get("/lockers")
 def get_lockers():
-    lockers = db_session.query(Locker).all()
+    lockers = get_all_lockers()
     return [{"id": locker.id, "name": locker.name, "is_available": locker.is_available} for locker in lockers]
 
 
@@ -101,3 +97,13 @@ async def get_user(user_id: int):
             for cred in user.credentials
         ]
     }
+
+
+@router.post('/add-locker')
+async def add_locker(request: Request, data: AddLockerRequest):
+    """Handle adding a new locker."""
+    try:
+        AddLocker(locker_name=data.locker_name, relay_pin=data.relay_pin)
+        return {"message": "Locker added successfully."}
+    except Exception as e:
+        return {"message": "Failed to add locker."}, 500

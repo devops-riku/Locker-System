@@ -11,7 +11,7 @@ router = APIRouter()
 # async def register_auth()
 
 @router.post("/login")
-async def login_auth(user: schemas.UserLoginRequest):
+async def login_auth(request: Request, user: schemas.UserLoginRequest):
     try:
         supabase = get_supabase_client()
         response = supabase.auth.sign_in_with_password({

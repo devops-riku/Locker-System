@@ -1,5 +1,7 @@
 from app.models.database import *
 from app.models.models import *
+from sqlalchemy.orm import *
+
 def CreateUser(first_name, last_name, id_number, address, email, password, locker_number, rfid_serial_number, pin_number):
     try:
         user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email)
@@ -15,12 +17,31 @@ def CreateUser(first_name, last_name, id_number, address, email, password, locke
         raise e
 
 
-
-def AddLocker(locker_name, relay_pin):
+def get_user_by_id(user_id):
     try:
-        locker = Locker(name=locker_name, relay_pin=relay_pin)
+        user = (db_session.query(User)
+                .options(joinedload(User.credentials).joinedload(UserCredential.locker))
+                .filter(User.id == user_id)
+                .first())
+        return user
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+
+def AddLocker(locker_name, relay_pin, is_available=True):
+    try:
+        locker = Locker(name=locker_name, relay_pin=relay_pin, is_available=is_available)
         db_session.add(locker)
         db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+def get_all_lockers():
+    try:
+        lockers = Locker.query.all()
+        return lockers
     except Exception as e:
         db_session.rollback()
         raise e
