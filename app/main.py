@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -34,10 +33,18 @@ class ContentSecurityPolicyMiddleware(BaseHTTPMiddleware):
 @app.middleware("http")
 async def sessions_middleware(request: Request, call_next):
     # List of paths that should not be checked for session
-    public_paths = ["/login", "/api/v1/auth/login", "/reset-email-password", "/new-password", "/api/v1/auth/request-password-reset", "/api/v1/auth/reset-password", "/register-super-admin"]
+    public_paths = [
+        "/login", "/api/v1/auth/login", "/reset-email-password", "/new-password",
+        "/api/v1/auth/request-password-reset", "/api/v1/auth/reset-password",
+        "/register-super-admin", "/admin/register-super-admin"
+    ]
+
+    # Bypass middleware for static files
+    if request.url.path.startswith("/app/static"):
+        return await call_next(request)
 
     # Check if there is no super admin
-    if not check_super_admin() and request.url.path != "/register-super-admin":
+    if not check_super_admin() and request.url.path not in ["/register-super-admin", "/admin/register-super-admin"]:
         # Redirect to register super admin if no super admin exists
         return RedirectResponse(url="/register-super-admin")
 

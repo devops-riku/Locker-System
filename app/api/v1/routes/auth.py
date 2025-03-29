@@ -6,9 +6,6 @@ from app.models import schemas
 from app.services.admin_service import get_user_by_email, serialize_user
 from app.services.auth_service import init_reset_password, send_reset_password_link
 
-
-
-
 router = APIRouter()
 
 
@@ -21,10 +18,9 @@ async def login_auth(request: Request, user: schemas.UserLoginRequest):
             "password": user.password,
             "timeout": 60
         })
-        
+
         user_data = get_user_by_email(user.email)
         request.session['user'] = serialize_user(user_data)
-        
 
         # TODO: User Session
         return {"message": "Login successful!"}
@@ -33,6 +29,7 @@ async def login_auth(request: Request, user: schemas.UserLoginRequest):
         raise HTTPException(status_code=500, detail="Unexpected response from authentication service")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{str(e)}")
+
 
 # For Requesting Password Reset Link
 @router.post("/request-password-reset")
@@ -43,7 +40,8 @@ async def request_password_reset(request: Request, user: schemas.RequestEmailRes
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"{str(e)}")
-    
+
+
 # For Changing Password
 @router.post("/reset-password")
 async def reset_password(request: Request):

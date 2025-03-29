@@ -180,7 +180,7 @@
             button.disabled = true;
             button.innerText = "Creating...";
 
-            axios.post("/register-super-admin", {
+            axios.post("/admin/register-super-admin", {
                 email: email,
                 password: password,
                 is_super_admin: true

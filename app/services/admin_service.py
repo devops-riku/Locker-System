@@ -3,14 +3,17 @@ from app.models.database import *
 from app.models.models import *
 from sqlalchemy.orm import *
 
+
 def get_user_session(request):
     if request.session.get('user'):
         return request.session['user']
     return None
 
+
 def user_is_logged_in(request) -> bool:
     """Mock function to check if a user is logged in"""
     return request.session.get("user", False)
+
 
 def check_super_admin() -> bool:
     """Check if there is any super admin user in the User model"""
@@ -22,14 +25,16 @@ def check_super_admin() -> bool:
         raise e
 
 
-def CreateUser(first_name, last_name, id_number, address, email, locker_number, rfid_serial_number, pin_number):
+def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number=None, created_by=None, is_super_admin=False):
     try:
-        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email)
+        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin)
         db_session.add(user)
         db_session.flush()
 
-        user_credentials = UserCredential(user_id=user.id, locker_id=locker_number, rfid_serial_number=rfid_serial_number, pin_number=pin_number)
-        db_session.add(user_credentials)
+        if id_number:
+            user_credentials = UserCredential(user_id=user.id, locker_id=locker_number,
+                                          rfid_serial_number=rfid_serial_number, pin_number=pin_number)
+            db_session.add(user_credentials)
         db_session.commit()
 
     except Exception as e:
@@ -47,6 +52,7 @@ def get_user_by_id(user_id):
     except Exception as e:
         db_session.rollback()
         raise e
+
 
 def get_user_by_email(email):
     try:
@@ -87,15 +93,17 @@ def serialize_user(user):
         ]
     }
 
-def AddLocker(locker_name, relay_pin, is_available=True):
+
+def AddLocker(locker_name, relay_pin, created_by, is_available=True):
     try:
-        locker = Locker(name=locker_name, relay_pin=relay_pin, is_available=is_available)
+        locker = Locker(name=locker_name, relay_pin=relay_pin, is_available=is_available, created_by=created_by)
         db_session.add(locker)
         db_session.commit()
     except Exception as e:
         db_session.rollback()
         raise e
-    
+
+
 def get_all_lockers():
     try:
         lockers = db_session.query(Locker).all()
@@ -113,5 +121,3 @@ def UpdateLockerAvailability(locker_id, is_available):
     except Exception as e:
         db_session.rollback()
         raise e
-    
-

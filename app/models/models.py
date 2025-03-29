@@ -39,7 +39,7 @@ class History(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    payload = Column(JSON, nullable=False)
+    action = Column(String, nullable=False)
     date_created = Column(DateTime, default=datetime.now(timezone.utc))
 
     # Relationship
