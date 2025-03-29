@@ -38,6 +38,7 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     $(document).ready(function() {
         let $lock = $("#inpLock");
@@ -49,6 +50,17 @@
             if (!$lock.is(":checked")) { 
                 console.log("Locker UNLOCKED"); // Log unlocked state
                 
+                // Send Axios POST request to unlock the locker
+                axios.post('/unlock-locker', {
+                    action: 'Unlock Locker'
+                })
+                .then(response => {
+                    console.log(response.data.message);
+                })
+                .catch(error => {
+                    console.error('Error unlocking locker:', error);
+                });
+
                 // Disable the lock button while countdown is active
                 $lock.prop("disabled", true);
 

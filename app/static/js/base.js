@@ -40,10 +40,15 @@ function toggleSidebar() {
 
 
 function logout() {
-    alert("Logging out...");
-    // Implement logout logic here
+    $('#logoutModal').modal('show');
 }
 
+function confirmLogout() {
+    // Perform logout action here
+    // For example, you might want to make an API call to logout
+    // and then redirect to the login page
+    window.location.href = '/logout';  // Replace with your actual logout URL
+}
 
 document.addEventListener("DOMContentLoaded", function () {
     // Get current page URL path
