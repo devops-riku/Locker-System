@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %} | Locker System</title>
 
-    <!-- Halfmoon CSS -->
     <link href="https://cdn.jsdelivr.net/npm/halfmoon@2.0.2/css/halfmoon.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <link rel="stylesheet" href="/app/static/css/padlock.css">
     <link rel="stylesheet" href="/app/static/css/base.css">
     {% block head %}{% endblock %}
@@ -45,6 +45,7 @@
 
             <!-- Navigation Links -->
             <a href="/my-locker" class="nav-link" data-page="my-locker"><i class="fa-solid fa-lock"></i><span class="nav-text"> My Locker</span></a>
+            <a href="/lockers" class="nav-link" data-page="lockers"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-text">Lockers</span></a>
             <a href="/users" class="nav-link" data-page="users"><i class="fa-solid fa-users"></i><span class="nav-text">Users</span></a>
             <a href="/history" class="nav-link" data-page="history"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-text">History</span></a>
             <a href="/profile" class="nav-link" data-page="profile"><i class="fa-solid fa-user"></i><span class="nav-text">My Profile</span></a>
@@ -67,9 +68,32 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to logout?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
   
     <!-- JavaScript for Sidebar & Burger Animation -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="/app/static/js/base.js"></script>
 
     

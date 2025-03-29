@@ -22,6 +22,30 @@
     border-color: #007bff;
     color: white;
 }
+
+.btn-primary{
+    background-color: #ff4081;
+    border-color: #ff4081;
+    color: white;
+    padding: 8px 20px;
+}
+
+.btn-secondary{
+    background-color: #59595900;
+    border-color: #ff4081;
+    color: rgb(255, 255, 255);
+    padding: 8px 20px;
+}
+
+.modal-content {
+    background-color: #2c2c2c; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+.modal-header, .modal-footer {
+    border-color: #444444; /* Dark border */
+}
+
 .btn-print:hover {
     background-color: #0056b3;
     border-color: #0056b3;

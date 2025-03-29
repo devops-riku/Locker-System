@@ -110,6 +110,7 @@ pinInput.addEventListener('keypress', function(e) {
         e.preventDefault();
     }
 });
+
 const grid = new gridjs.Grid({
     columns: [
         "Name",
@@ -207,7 +208,9 @@ grid.on('load', () => {
 
 
 // Add user functionality
-document.getElementById('saveUser').addEventListener('click', function() {
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
     const first_name = document.getElementById('first_name').value;
     const last_name = document.getElementById('last_name').value;
     const id_number = document.getElementById('id_number').value;
@@ -218,7 +221,6 @@ document.getElementById('saveUser').addEventListener('click', function() {
     const rfid_serial_number = document.getElementById('rfid_serial_number').value;
     const pin_number = document.getElementById('pin_number').value;
     
-
     const userData = {
         first_name,
         last_name,
@@ -232,37 +234,89 @@ document.getElementById('saveUser').addEventListener('click', function() {
     };
 
     axios.post('/admin/create-user', userData)
-        .then(function (response) {
-            console.log('User added successfully:', response.data);
+        .then(response => {
+            toastr.success("User added successfully.");
 
             // Clear the form
             clearAddUserForm();
-            
+
             // Close the modal
-            var modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+            if (modal) modal.hide();
+
+            // Now re-render grid after successful toast
+            grid.updateConfig({}).forceRender();
+        })
+        .catch(error => {
+            console.error('Error adding user:', error);
+            toastr.error('Error adding user. Please try again.');
+        });
+});
+
+// Update user functionality
+document.getElementById('editUserForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const id = document.getElementById('editUserId').value;
+    const first_name = document.getElementById('editFirstName').value;
+    const last_name = document.getElementById('editLastName').value;
+    const email = document.getElementById('editEmail').value;
+    const id_number = document.getElementById('editIdNumber').value;
+    const address = document.getElementById('editAddress').value;
+    const assigned_locker = document.getElementById('editLocker').value;
+
+    const payload = {
+        first_name,
+        last_name,
+        id_number,
+        address,
+        email,
+        assigned_locker
+    };
+
+    axios.put(`/admin/user/${id}`, payload)
+        .then(response => {
+            toastr.success("User updated successfully.");
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+            if (modal) modal.hide();
+
+            // Now re-render grid after successful toast
+            grid.updateConfig({}).forceRender();
+        })
+        .catch(error => {
+            console.error('Error updating user:', error);
+            toastr.error("Failed to update user.");
+        });
+});
+
+
+// Delete user functionality
+document.getElementById('confirmDeleteUser').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    const userId = this.dataset.userId;
+
+    if (!userId) {
+        toastr.error("User ID is missing.");
+        return;
+    }
+
+    axios.delete(`/admin/user/${userId}`)
+        .then(response => {
+            toastr.success("User deleted successfully.");
+
+            // Hide the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
             modal.hide();
 
-
-            // Optional: Show a success message
-            alert('User added successfully!');
-            
-            // Refresh the grid
-            grid.forceRender();
+            // Now re-render grid after successful toast
+            grid.updateConfig({}).forceRender();
         })
-        .catch(function (error) {
-            console.error('Error adding user:', error);
-            // Optional: Show an error message
-            alert('Error adding user. Please try again.');
+        .catch(error => {
+            console.error("Delete error:", error);
+            toastr.error("Failed to delete user.");
         });
-
-
-
-    // Close the modal
-    var modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
-    modal.hide();
-
-    // Refresh the grid
-    grid.forceRender();
 });
 
 function clearAddUserForm() {
@@ -285,39 +339,6 @@ function clearAddUserForm() {
         strengthText.textContent = '';
     }
 }
-
-// Edit user functionality
-document.getElementById('updateUser').addEventListener('click', function() {
-    const id = document.getElementById('editUserId').value;
-    const name = document.getElementById('editName').value;
-    const username = document.getElementById('editUsername').value;
-    const email = document.getElementById('editEmail').value;
-
-    // Here you would typically send this data to your server
-    console.log('Updating user:', { id, name, username, email });
-
-    // Close the modal
-    var modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-    modal.hide();
-
-    // Refresh the grid
-    grid.forceRender();
-});
-
-// Delete user functionality
-document.getElementById('confirmDelete').addEventListener('click', function() {
-    const id = this.dataset.userId;
-
-    // Here you would typically send this data to your server
-    console.log('Deleting user with ID:', id);
-
-    // Close the modal
-    var modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
-    modal.hide();
-
-    // Refresh the grid
-    grid.forceRender();
-    });
 });
 
 function showActions(event, id) {
@@ -376,28 +397,85 @@ function viewUser(id) {
 
 
 function editUser(id) {
-// Fetch user data and populate the form
-fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
-    .then(response => response.json())
-    .then(user => {
+    Promise.all([
+        fetch(`/admin/user/${id}`).then(res => res.json()),
+        fetch('/admin/lockers').then(res => res.json())
+    ])
+    .then(([user, lockers]) => {
         document.getElementById('editUserId').value = user.id;
-        document.getElementById('editName').value = user.name;
-        document.getElementById('editUsername').value = user.username;
+        document.getElementById('editFirstName').value = user.first_name;
+        document.getElementById('editLastName').value = user.last_name;
+        document.getElementById('editIdNumber').value = user.id_number;
         document.getElementById('editEmail').value = user.email;
+        document.getElementById('editAddress').value = user.address;
 
-        // Show the modal
-        var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        const lockerSelect = document.getElementById('editLocker');
+        lockerSelect.innerHTML = '';
+
+        // Create option groups
+        const availableGroup = document.createElement('optgroup');
+        availableGroup.label = 'Available';
+        const notAvailableGroup = document.createElement('optgroup');
+        notAvailableGroup.label = 'Not Available';
+
+        // Add a default "Choose Locker" option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "Choose Locker";
+        defaultOption.disabled = true;
+        lockerSelect.appendChild(defaultOption);
+
+        lockers.forEach(locker => {
+            const option = document.createElement('option');
+            option.value = locker.id;
+            option.textContent = locker.name;
+
+            if (locker.is_available || locker.id === user.credentials[0]?.locker?.id) {
+                availableGroup.appendChild(option);
+            } else {
+                option.disabled = true;
+                notAvailableGroup.appendChild(option);
+            }
+
+            if (locker.id === user.credentials[0]?.locker?.id) {
+                option.selected = true;
+            }
+        });
+
+        // Add groups to select element
+        if (availableGroup.children.length > 0) {
+            lockerSelect.appendChild(availableGroup);
+        }
+        if (notAvailableGroup.children.length > 0) {
+            lockerSelect.appendChild(notAvailableGroup);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
         modal.show();
+    })
+    .catch(error => {
+        console.error('Error loading user or lockers:', error);
+        toastr.error("Failed to load user details or lockers.");
     });
 }
 
 function deleteUser(id) {
-// Set the user ID to delete
-document.getElementById('confirmDelete').dataset.userId = id;
+    fetch(`/admin/user/${id}`)
+        .then(res => res.json())
+        .then(user => {
+            const fullName = `${user.first_name} ${user.last_name}`;
+            document.getElementById('deleteUserName').textContent = fullName;
 
-// Show the modal
-var modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-modal.show();
+            const deleteBtn = document.getElementById('confirmDeleteUser');
+            deleteBtn.dataset.userId = id;
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+            modal.show();
+        })
+        .catch(err => {
+            console.error("Failed to load user info:", err);
+            toastr.error("Failed to fetch user information.");
+        });
 }
 
 function populateLockerList() {
@@ -445,3 +523,6 @@ function populateLockerList() {
             console.error('Error fetching lockers:', error);
         });
 }
+
+
+

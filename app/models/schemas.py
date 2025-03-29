@@ -1,5 +1,10 @@
+from typing import List
 from pydantic import BaseModel, Field
 
+class SuperAdminCreate(BaseModel):
+    email: str
+    password: str = Field(min_length=6)
+    is_super_admin: bool = True
 
 class UserLoginRequest(BaseModel):
     email: str = Field(...)
@@ -27,3 +32,23 @@ class AddLockerRequest(BaseModel):
 class RequestEmailResetPassword(BaseModel):
     email: str = Field(...)
 
+
+class AddLockerRequest(BaseModel):
+    locker_name: str
+    relay_pin: int
+
+class UpdateLockerRequest(BaseModel):
+    locker_name: str
+    relay_pin: int
+    is_available: bool = True
+
+
+class UpdateUserRequest(BaseModel):
+    first_name: str
+    last_name: str
+    id_number: str
+    address: str
+    email: str
+    assigned_locker: int
+
+    
