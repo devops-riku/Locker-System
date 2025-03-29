@@ -53,3 +53,7 @@ class UpdateUserRequest(BaseModel):
     address: str
     email: str
     assigned_locker: int
+
+
+class HistoryLogRequest(BaseModel):
+    action: str

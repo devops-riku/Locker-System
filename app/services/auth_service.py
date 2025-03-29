@@ -35,3 +35,17 @@ def create_auth_user(email, password):
 });
     return response
 
+
+def delete_auth_user(email):
+    all_users = supabase.auth.admin.list_users()
+    user_to_delete = next((user for user in all_users if user.email == email), None)
+    
+    if user_to_delete:
+            user_id = user_to_delete.id
+            # Delete the user
+            supabase.auth.admin.delete_user(user_id)
+            print(f"User with email '{email}' deleted.")
+    else:
+        print("User not found.")
+
+

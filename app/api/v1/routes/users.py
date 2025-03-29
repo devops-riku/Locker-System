@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.core.config import templates
+from app.models.schemas import *
 from app.services.admin_service import get_user_by_id, get_user_session
 from app.services.history_logs import log_history
 
@@ -68,8 +69,9 @@ async def logout(request: Request):
 
 
 @router.post("/unlock-locker")
-async def unlock_locker(request: Request):
-    await log_history(user_id=get_user_session.get('id'), action="My Locker", details="Unlocked locker")
+async def unlock_locker(request: Request, history: HistoryLogRequest):
+    log_history(user_id=get_user_session(request).get('id'), action=history.action)
+    return {"message": "Locker unlocked successfully"}
 
 
 @router.get("/s")

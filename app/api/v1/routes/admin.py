@@ -1,11 +1,16 @@
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import ValidationError
+from sqlalchemy import desc
 
 from app.models.database import db_session
-from app.models.models import Locker, User, UserCredential
+from app.models.models import History, Locker, User, UserCredential
 from app.models.schemas import AddLockerRequest, CreateUserRequest, SuperAdminCreate, UpdateLockerRequest, UpdateUserRequest
 from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_session
-from app.services.auth_service import create_auth_user
+from app.services.auth_service import create_auth_user, delete_auth_user
+from datetime import datetime
+import pytz
+
+from app.services.utc_converter import utc_to_ph
 
 router = APIRouter(prefix="/admin")
 
@@ -117,13 +122,15 @@ async def update_user(user_id: int, user: UpdateUserRequest):
 @router.delete("/user/{user_id}")
 async def delete_user(user_id: int):
     user = db_session.query(User).filter(User.id == user_id).first()
+    locker_id = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first().locker_id
+    UpdateLockerAvailability(locker_id=locker_id, is_available=True)
+    delete_auth_user(user.email)
     db_session.delete(user)
     db_session.commit()
     return {"message": "User deleted successfully."}
 
 
 # Lockers
-
 @router.get("/lockers")
 def get_lockers():
     return db_session.query(Locker).all()
@@ -182,3 +189,26 @@ async def register_super_admin(super_admin: SuperAdminCreate):
     return {"message": "Super admin created successfully."}
 
    
+
+
+@router.get("/get_history")
+async def get_history(request: Request):
+    user = get_user_session(request)
+
+    # Determine the query based on user role
+    if user.get('is_super_admin'):
+        history_records = db_session.query(History).order_by(desc(History.date_created)).all()
+    else:
+        history_records = db_session.query(History).filter(History.user_id == user.get('id')).order_by(desc(History.date_created)).all()
+
+    # Serialize the history records
+    history_list = [
+        {
+            "author": f"{record.user.first_name} {record.user.last_name}" if record.user else "Unknown",
+            "action": record.action,
+            "datetime": utc_to_ph(str(record.date_created))  # Convert to UTC+8:00
+        }
+        for record in history_records
+    ]
+
+    return {"history": history_list}
