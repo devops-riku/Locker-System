@@ -4,6 +4,7 @@ body, html {
     background-color: #ffdc5c;
     color: #181818;
     transition: margin-left 0.3s ease-in-out;
+    
 }
 
 /* Patterned Background */
@@ -190,6 +191,29 @@ input::-ms-reveal {
     justify-content: center;
     width: 30px;
     height: 30px;
+}
+
+.btn-primary{
+    background-color: #ff4081;
+    border-color: #ff4081;
+    color: white;
+    padding: 8px 20px;
+}
+
+.btn-secondary{
+    background-color: #59595900;
+    border-color: #ff4081;
+    color: rgb(255, 255, 255);
+    padding: 8px 20px;
+}
+
+.modal-content {
+    background-color: #2c2c2c; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+.modal-header, .modal-footer {
+    border-color: #444444; /* Dark border */
 }
 
 /* Mobile Sidebar */

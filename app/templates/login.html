@@ -51,7 +51,7 @@
         </div>
 
         <div class="text-center mt-3">
-            <a href="/reset-password">Forgot password?</a>
+            <a href="/reset-email-password">Forgot password?</a>
         </div>
     </div>
 
@@ -105,7 +105,7 @@
                     if (response.data.message) {
                         toastr.success(response.data.message);
                         setTimeout(() => {
-                            window.location.href = '/dashboard';
+                            window.location.href = '/';
                         }, 1500);
                     } else {
                         toastr.error("Unexpected response from server.");
