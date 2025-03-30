@@ -90,8 +90,8 @@ app.add_middleware(ContentSecurityPolicyMiddleware)
 
 # Root Endpoint
 @app.get("/", tags=["Root"])
-def root(request: Request, is_admin: bool = Depends(is_super_admin)):
-    if is_admin:
+async def root(request: Request):
+    if get_user_session(request).get('is_super_admin', False):
         return RedirectResponse(url="/lockers")
     return RedirectResponse(url="/my-locker")
 
