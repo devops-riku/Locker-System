@@ -377,7 +377,7 @@ function viewUser(id) {
         .then(user => {
             if (user) {
                 const userDetailsHtml = `
-                    <p><strong>Name:</strong> ${user.Name}</p>
+                    <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
                     <p><strong>Email:</strong> ${user.email}</p>
                     <p><strong>ID Number:</strong> ${user.id_number}</p>
                     <p><strong>Address:</strong> ${user.address}</p>
