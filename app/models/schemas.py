@@ -10,7 +10,7 @@ class SuperAdminCreate(BaseModel):
 
 class UserLoginRequest(BaseModel):
     email: str = Field(...)
-    password: str = Field(..., min_length=6, max_length=50)
+    password: str = Field(..., max_length=50)
 
 
 class CreateUserRequest(BaseModel):
