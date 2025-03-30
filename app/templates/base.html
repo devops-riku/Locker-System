@@ -44,12 +44,18 @@
             </div>
 
             <!-- Navigation Links -->
+            {% if request.session['user'].get('is_super_admin') == false %}
             <a href="/my-locker" class="nav-link" data-page="my-locker"><i class="fa-solid fa-lock"></i><span class="nav-text"> My Locker</span></a>
+            {% endif %}
             <a href="/lockers" class="nav-link" data-page="lockers"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-text">Lockers</span></a>
             <a href="/users" class="nav-link" data-page="users"><i class="fa-solid fa-users"></i><span class="nav-text">Users</span></a>
             <a href="/history" class="nav-link" data-page="history"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-text">History</span></a>
+            {% if request.session['user'].get('is_super_admin') == false %}
             <a href="/profile" class="nav-link" data-page="profile"><i class="fa-solid fa-user"></i><span class="nav-text">My Profile</span></a>
+            {% endif %}
+            {% if request.session['user'].get('is_super_admin') == false %}
             <a href="/settings" class="nav-link" data-page="settings"><i class="fa-solid fa-gear"></i><span class="nav-text">Settings</span></a>
+            {% endif %}
         </div>
 
         <!-- Logout Button Stuck to Bottom -->

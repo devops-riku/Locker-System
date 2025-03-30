@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.core.config import templates
 from app.models.schemas import *
-from app.services.admin_service import get_user_by_id, get_user_session
+from app.services.admin_service import get_user_by_id, get_user_session, is_super_admin
 from app.services.history_logs import log_history
 
 router = APIRouter()
@@ -46,14 +46,14 @@ async def history_page(request: Request):
     return templates.TemplateResponse('history-logs.html', {'request': request})
 
 
-@router.get('/users')
+@router.get('/users', response_class=HTMLResponse, dependencies=[Depends(is_super_admin)])
 async def user_list_page(request: Request):
     return templates.TemplateResponse('users.html', {'request': request})
 
 
 @router.get('/settings')
 async def settings_page(request: Request):
-    user = get_user_by_id(1)
+    user = get_user_by_id(get_user_session(request).get('id'))
     return templates.TemplateResponse('settings.html', {'request': request, "user": user})
 
 

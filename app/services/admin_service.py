@@ -1,4 +1,6 @@
 import inspect
+
+from fastapi import HTTPException, Request
 from app.models.database import *
 from app.models.models import *
 from sqlalchemy.orm import *
@@ -23,6 +25,12 @@ def check_super_admin() -> bool:
     except Exception as e:
         db_session.rollback()
         raise e
+
+async def is_super_admin(request: Request) -> bool:
+    user_session = get_user_session(request)
+    if not user_session.get('is_super_admin'):
+        raise HTTPException(status_code=403, detail="Access forbidden: Super admin only")
+    return True
 
 
 def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number=None, created_by=None, is_super_admin=False):
