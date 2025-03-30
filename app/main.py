@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +12,7 @@ from app.api.v1.routes import users as users_v1, auth as auth_v1, admin as admin
 from app.core.init_db import init_db
 from app.services.admin_service import user_is_logged_in
 from app.services.admin_service import user_is_logged_in, check_super_admin
-
+from app.services.admin_service import *
 # from app.api.v2.routes import users as users_v2, auth as auth_v2, admin as admin_v2
 
 
@@ -90,6 +90,8 @@ app.add_middleware(ContentSecurityPolicyMiddleware)
 
 # Root Endpoint
 @app.get("/", tags=["Root"])
-def root(request: Request):
+def root(request: Request, is_admin: bool = Depends(is_super_admin)):
+    if is_admin:
+        return RedirectResponse(url="/lockers")
     return RedirectResponse(url="/my-locker")
 
