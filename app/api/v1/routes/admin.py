@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 from sqlalchemy import desc
 
 from app.models.database import db_session
 from app.models.models import History, Locker, User, UserCredential
 from app.models.schemas import AddLockerRequest, CreateUserRequest, SuperAdminCreate, UpdateLockerRequest, UpdateUserRequest
-from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_session
+from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_session, is_super_admin
 from app.services.auth_service import create_auth_user, delete_auth_user
 from datetime import datetime
 import pytz
@@ -25,8 +25,10 @@ async def create_user(user: CreateUserRequest, request: Request):
     return {"message": "User created successfully"}
 
 
-@router.get("/user-lists")
+@router.get("/user-lists", dependencies=[Depends(is_super_admin)])
 async def get_user_lists(page_number: int = Query(1, ge=1), page_size: int = Query(10, ge=1)):
+
+    
     # Get total number of users
     total_users = db_session.query(User).filter(User.is_super_admin == False).count()
     total_pages = (total_users + page_size - 1) // page_size
