@@ -68,10 +68,7 @@ async def logout(request: Request):
     return RedirectResponse(url="/login")
 
 
-@router.post("/unlock-locker")
-async def unlock_locker(request: Request, history: HistoryLogRequest):
-    log_history(user_id=get_user_session(request).get('id'), action=history.action)
-    return {"message": "Locker unlocked successfully"}
+
 
 
 @router.get("/s")

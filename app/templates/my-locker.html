@@ -53,7 +53,7 @@
                 console.log("Locker UNLOCKED"); // Log unlocked state
                 
                 // Send Axios POST request to unlock the locker
-                axios.post('/unlock-locker', {
+                axios.post('/mqtt/unlock-locker', {
                     action: 'Unlock Locker'
                 })
                 .then(response => {

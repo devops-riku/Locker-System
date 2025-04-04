@@ -1,3 +1,4 @@
+import threading
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -8,11 +9,11 @@ from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 # Import API version routes
-from app.api.v1.routes import users as users_v1, auth as auth_v1, admin as admin_v1
+from app.api.v1.routes import mqtt_trigger, users as users_v1, auth as auth_v1, admin as admin_v1
 from app.core.init_db import init_db
-from app.services.admin_service import user_is_logged_in
+from app.services.admin_service import get_user_session, user_is_logged_in
 from app.services.admin_service import user_is_logged_in, check_super_admin
-from app.services.admin_service import *
+from app.services.mqtt import mqtt_setup, mqtt_client
 # from app.api.v2.routes import users as users_v2, auth as auth_v2, admin as admin_v2
 
 
@@ -73,6 +74,8 @@ app.include_router(users_v1.router, tags=["Users v1"])
 app.include_router(auth_v1.router, prefix="/api/v1/auth", tags=["Auth v1"])
 app.include_router(admin_v1.router, tags=["Admin v1"])
 
+# Route for MQTT
+app.include_router(mqtt_trigger.router, prefix="/mqtt", tags=["MQTT"])
 
 app.add_middleware(SessionMiddleware, secret_key="@LockerSystem!")
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -86,7 +89,8 @@ app.add_middleware(
 
 app.add_middleware(ContentSecurityPolicyMiddleware)
 
-
+# Start MQTT setup in background
+threading.Thread(target=mqtt_setup, daemon=True).start()
 
 # Root Endpoint
 @app.get("/", tags=["Root"])

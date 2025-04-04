@@ -12,7 +12,7 @@ class User(Base):
     address = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     is_super_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String, nullable=True)
     
     # Relationships
@@ -28,7 +28,7 @@ class UserCredential(Base):
     rfid_serial_number = Column(String, nullable=False)
     pin_number = Column(Integer, nullable=False)
     is_current_holder = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     user = relationship("User", back_populates="credentials")
@@ -40,7 +40,7 @@ class History(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     action = Column(String, nullable=False)
-    date_created = Column(DateTime, default=datetime.now(timezone.utc))
+    date_created = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationship
     user = relationship("User", back_populates="history_logs")
@@ -51,7 +51,7 @@ class Locker(Base):
     name = Column(String, nullable=False)
     relay_pin = Column(Integer, unique=True, nullable=False)
     is_available = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String, nullable=True)
 
     user_credential = relationship("UserCredential", back_populates="locker", cascade="all, delete-orphan")
