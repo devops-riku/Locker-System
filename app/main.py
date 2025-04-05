@@ -1,4 +1,7 @@
+import os
 import threading
+import time
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -15,7 +18,8 @@ from app.services.admin_service import get_user_session, user_is_logged_in
 from app.services.admin_service import user_is_logged_in, check_super_admin
 from app.services.mqtt import mqtt_setup, mqtt_client
 # from app.api.v2.routes import users as users_v2, auth as auth_v2, admin as admin_v2
-
+from app.services.mqtt import mqtt_client
+load_dotenv()
 
 init_db()
 # Initialize FastAPI
@@ -99,3 +103,43 @@ async def root(request: Request):
         return RedirectResponse(url="/users")
     return RedirectResponse(url="/my-locker")
 
+
+
+
+def debounce(wait):
+    """
+    Decorator that will postpone a function's
+    execution until after wait seconds
+    have elapsed since the last time it was invoked.
+    """
+    def decorator(fn):
+        def debounced(*args, **kwargs):
+            def call_it():
+                fn(*args, **kwargs)
+            try:
+                debounced.t.cancel()
+            except(AttributeError):
+                pass
+            debounced.t = threading.Timer(wait, call_it)
+            debounced.t.start()
+        return debounced
+    return decorator
+
+@debounce(1)  # 1 second debounce
+def check_mqtt():
+    # This function will be called at most once per second
+    mqtt_client.loop(timeout=0.1)
+
+def run():
+    mqtt_setup()
+
+    try:
+        while True:
+            check_mqtt()
+            time.sleep(0.1)  # Sleep for a short time to prevent CPU hogging
+    except KeyboardInterrupt:
+        print("👋 Shutting down...")
+        mqtt_client.disconnect()
+
+if __name__ == "__main__":
+    run()

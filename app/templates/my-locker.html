@@ -127,7 +127,7 @@
                     
                     // Send Axios POST request to unlock the locker
                     axios.post('/mqtt/unlock-locker', {
-                        action: 'Unlock Locker'
+                        action: 'Locker Unlocked by System'
                     })
                     .then(response => {
                         console.log(response.data.message);
