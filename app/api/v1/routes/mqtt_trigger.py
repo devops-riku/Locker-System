@@ -29,7 +29,7 @@ async def unlock_locker(request: Request, history: HistoryLogRequest):
     mqtt_payload = {
         "user_id": str(user_id),
         "rfid": locker_info[0]["rfid_serial_number"],
-        "command": "Unlock"
+        "command": "unlock"
     }
 
     try:
