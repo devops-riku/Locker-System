@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 from sqlalchemy import desc
 
+from app.core.config import get_supabase_client
 from app.models.database import db_session
 from app.models.models import History, Locker, User, UserCredential
 from app.models.schemas import AddLockerRequest, CreateUserRequest, SuperAdminCreate, UpdateLockerRequest, UpdateUserRequest
@@ -161,19 +162,47 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
 
 @router.delete("/user/{user_id}")
 async def delete_user(user_id: int):
+    supabase = get_supabase_client()
     user = db_session.query(User).filter(User.id == user_id).first()
-    locker_id = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first().locker_id
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found in local database")
+
+    user_credential = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first()
+    if user_credential:
+        locker_id = user_credential.locker_id
+    else:
+        locker_id = None
+
     payload = {
         "user_id": user_id,
         "delete": True
     }
+
+    # Try to delete from Supabase if the user exists
+    supabase_users = supabase.auth.admin.list_users()
+    supabase_user = next((u for u in supabase_users if u.email == user.email), None)
+    if supabase_user:
+        try:
+            supabase.auth.admin.delete_user(supabase_user.id)
+        except Exception as e:
+            print(f"Error deleting user from Supabase: {e}")
+    else:
+        print(f"User with email {user.email} not found in Supabase")
+
+    # Continue with local operations
     mqtt_client.publish(os.getenv("MQTT_TOPIC"), json.dumps(payload))
-    UpdateLockerAvailability(locker_id=locker_id, is_available=True)
-    delete_auth_user(user.email)
+    
+    if locker_id:
+        UpdateLockerAvailability(locker_id=locker_id, is_available=True)
+    
+    try:
+        delete_auth_user(user.email)
+    except Exception as e:
+        print(f"Error in delete_auth_user: {e}")
+
     db_session.delete(user)
     db_session.commit()
 
-    
     return {"message": "User deleted successfully."}
 
 

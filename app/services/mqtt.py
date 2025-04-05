@@ -10,6 +10,10 @@ MQTT_TOPIC = "locker/control"
 
 mqtt_client = mqtt.Client()
 
+# Apply TLS and auth only once
+mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+mqtt_client.tls_set()
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("✅ MQTT connected to HiveMQ.")
@@ -17,17 +21,16 @@ def on_connect(client, userdata, flags, rc):
         print(f"⚠️ MQTT connect failed with code {rc}")
 
 def on_disconnect(client, userdata, rc):
-    print("🔌 MQTT disconnected, attempting to reconnect...")
+    print("🔌 MQTT disconnected. Reconnecting in 5s...")
+    time.sleep(5)
     reconnect_mqtt()
 
 def reconnect_mqtt():
     while True:
         try:
-            mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-            mqtt_client.tls_set()
             mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
             mqtt_client.loop_start()
-            return
+            break
         except Exception as e:
             print("❌ Reconnect failed:", e)
             time.sleep(5)

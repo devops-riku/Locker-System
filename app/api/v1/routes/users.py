@@ -230,7 +230,7 @@ async def update_pin(request: Request, pin_data: PinUpdate):
         db_session.commit()
 
         mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
-        request.session['credentials'][0]['pin_number'] = pin_data.new_pin
+        request.session.get("user")['credentials'][0]['pin_number'] = pin_data.new_pin
         
         # Log the PIN update action
         log_history(user_id=user_id, action="Update PIN Number")
