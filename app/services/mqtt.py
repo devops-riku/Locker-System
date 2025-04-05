@@ -33,39 +33,18 @@ def on_disconnect(client, userdata, rc):
 
 def on_message(client, userdata, msg):
     try:
-        # Print the raw message for debugging
-        print(f"📥 Raw message received on {msg.topic}: {msg.payload}")
-
-        # Check if the payload is empty
-        if not msg.payload:
-            print("⚠️ Received an empty message")
-            return
-
-        # Decode the payload from bytes to string
-        decoded_payload = msg.payload.decode('utf-8')
-
-        # Parse the JSON string
-        payload = json.loads(decoded_payload)
-
-        print(f"📥 Parsed message on {msg.topic}: {payload}")
+        payload = json.loads(msg.payload.decode())
+        print(f"📥 Message received on {msg.topic}: {payload}")
 
         if payload.get("type") == "history":
             user_id = payload.get("user_id")
             action = payload.get("action")
-            
-            print(f"📝 History: user_id={user_id}, action={action}")
 
-            # Forward to API or database
-            log_history(user_id=user_id, action=action)
-        else:
-            print(f"ℹ️ Received message of unknown type: {payload}")
+            log_history(user_id=int(user_id), action=action)
 
-    except json.JSONDecodeError as e:
-        print(f"⚠️ Failed to parse JSON: {e}")
+
     except Exception as e:
-        print(f"❌ Failed to handle message: {e}")
-        import traceback
-        traceback.print_exc()
+        print("❌ Failed to handle message:", e)
 
 def reconnect_mqtt():
     while True:
