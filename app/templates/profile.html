@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block head %}
+<style>
+    .profile-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .profile-card {
+        max-width: 350px;
+        width: 100%;
+        background: var(--dark-mode-card-bg, #1c1c1e);
+        color: var(--light-text, #ffffff);
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+    }
+
+    .profile-img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid var(--primary);
+        margin: 0 auto 15px;
+        display: block;
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .profile-email {
+        font-size: 0.9rem;
+        color: var(--gray-400);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-info {
+        margin-bottom: 15px;
+        position: relative;
+    }
+
+    .profile-info-label {
+        font-size: 0.8rem;
+        color: var(--gray-400);
+        margin-bottom: 2px;
+    }
+
+    .profile-info-value {
+        font-size: 1rem;
+        padding-right: 30px;
+    }
+
+    .toggle-eye {
+        position: absolute;
+        top: 20px;
+        right: 0;
+        cursor: pointer;
+        color: #ccc;
+    }
+
+    hr {
+        border-color: var(--gray-700);
+        margin: 20px 0;
+    }
+
+    h5 {
+        color: var(--gray-300);
+        margin-bottom: 15px;
+    }
+    .modal-content {
+    background-color: #2c2c2c; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+.modal-header, .modal-footer {
+    border-color: #444444; /* Dark border */
+}
+
+    @media (max-width: 400px) {
+        .profile-container {
+            padding: 10px;
+        }
+
+        .profile-card {
+            padding: 15px;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+        }
+
+        .profile-info-value {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        <img src="https://cdn.statically.io/avatar/foo" alt="Profile Picture" class="profile-img">
+        <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
+        <p class="profile-email">{{ user.email }}</p>
+
+        <div class="profile-info">
+            <div class="profile-info-label">ID Number</div>
+            <div class="profile-info-value">
+                {{ user.id_number }}
+            </div>
+        </div>
+        <div class="profile-info">
+            <div class="profile-info-label">Address</div>
+            <div class="profile-info-value">
+                {{ user.address }}
+            </div>
+        </div>
+        <hr>
+        <h5>Locker Details</h5>
+
+        <div class="profile-info">
+            <div class="profile-info-label">Assigned Locker</div>
+            <div class="profile-info-value">
+                {% for credential in user.credentials %}
+                    {{ credential.locker.name }}
+                {% endfor %}
+                {{ locker_name }}
+            </div>
+        </div>
+
+        {% if user.credentials %}
+            <div class="profile-info">
+                <div class="profile-info-label">RFID Serial Number</div>
+                <div class="profile-info-value">
+                    {% for credential in user.credentials %}
+                        {{ credential.rfid_serial_number }}
+                    {% endfor %}
+                    {{ rfid_number }}
+                </div>
+            </div>
+            <!-- <div class="profile-info">
+                <div class="profile-info-label">Pin Number</div>
+                <div class="profile-info-value" id="pin-mask">
+                    ****
+                </div>
+                <div class="toggle-eye" onclick="togglePin(this)" title="Show/Hide PIN">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div id="pin-actual" style="display: none;">
+                    {% for credential in user.credentials %}
+                        {{ credential.pin_number }}
+                    {% endfor %}
+                    {{ rfid_number }}
+                </div>
+            </div> -->
+        {% endif %}
+
+        {% if user.created_at %}
+            <div class="profile-info">
+                <div class="profile-info-label">Account Created</div>
+                <div class="profile-info-value">{{ user.created_at.strftime('%m-%d-%Y | %H:%M %p') }}</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    function togglePin(icon) {
+        const masked = document.getElementById("pin-mask");
+        const actual = document.getElementById("pin-actual");
+        const eyeIcon = icon.querySelector('i');
+
+        if (masked.style.display === "none") {
+            masked.style.display = "block";
+            actual.style.display = "none";
+            eyeIcon.classList.remove("fa-eye-slash");
+            eyeIcon.classList.add("fa-eye");
+        } else {
+            masked.style.display = "none";
+            actual.style.display = "block";
+            eyeIcon.classList.remove("fa-eye");
+            eyeIcon.classList.add("fa-eye-slash");
+        }
+    }
+</script>
+{% endblock %}

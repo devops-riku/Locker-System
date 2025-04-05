@@ -1,0 +1,259 @@
+/* General Styles */
+body, html {
+    font-family: 'Poppins', sans-serif;
+    background-color: #ffdc5c;
+    color: #181818;
+    transition: margin-left 0.3s ease-in-out;
+    overflow: hidden;
+    
+}
+
+/* Patterned Background */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* For Edge */
+input::-ms-reveal {
+    display: none;
+  }
+  
+  /* For Chrome (if applicable in some custom UIs) */
+  input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+  }
+
+/* Sidebar Default (Always Open) */
+.sidebar {
+    width: 200px;
+    height: 100%;
+    background-color: #181818 !important;
+    color: white !important;
+    position: fixed;
+    left: 0;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: 20px;
+}
+
+/* Sidebar Logo */
+.sidebar .logo-container {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.sidebar .logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: white;
+    display: block;
+    margin: 0 auto;
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    padding: 10px;
+}
+
+/* Sidebar Links */
+.sidebar a {
+    color: white !important;
+    font-size: 14px;
+    padding: 15px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+/* Sidebar Links on Hover */
+.sidebar a:hover {
+    background-color: #333 !important;
+}
+
+/* Sidebar Icons */
+.sidebar i {
+    min-width: 30px; /* Ensures uniform spacing */
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Sidebar Text */
+.sidebar .nav-text {
+    margin-left: 10px; /* Add spacing between icon and text */
+}
+
+/* Logout Button */
+.logout {
+    margin: 20px auto;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    background-color: #d9534f; /* Red */
+    width: 80%;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout:hover {
+    background-color: #c9302c;
+}
+
+/* Main Content */
+.content {
+    margin-left: 200px;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+    position: relative; /* Ensures proper layout */
+}
+
+/* Mobile Navbar */
+.navbar {
+    display: none;
+    background-color: #181818;
+    color: white;
+    padding: 10px 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Burger Menu */
+.burger {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    width: 30px;
+}
+
+.burger div {
+    width: 30px;
+    height: 4px;
+    background-color: white;
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+/* Burger Animation */
+.burger.active div:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.burger.active div:nth-child(2) {
+    opacity: 0;
+}
+
+.burger.active div:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Active Sidebar Link */
+.sidebar a.active, .sidebar a.active:hover {
+    background-color: #444 !important; /* Highlight color */
+    font-weight: bold;
+    border-left: 4px solid #ffdc5c; /* Yellow accent border */
+}
+
+.collapse-button {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    right: -10px; /* Moves it outside the sidebar */
+    background: #333;
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, background 0.2s;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+}
+
+.btn-primary{
+    background-color: #ff4081;
+    border-color: #ff4081;
+    color: white;
+    padding: 8px 20px;
+}
+
+.btn-secondary{
+    background-color: #59595900;
+    border-color: #ff4081;
+    color: rgb(255, 255, 255);
+    padding: 8px 20px;
+}
+
+.modal-content {
+    background-color: #2c2c2c; /* Dark background */
+    color: #ffffff; /* Light text */
+}
+
+.modal-header, .modal-footer {
+    border-color: #444444; /* Dark border */
+}
+
+/* Mobile Sidebar */
+/* Mobile Sidebar */
+@media (max-width: 768px) {
+.navbar {
+    display: flex;
+}
+
+.collapse-button {
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    left: -250px; /* Initially hidden */
+    position: fixed;
+    height: 100%;
+    transition: left 0.3s ease-in-out;
+    z-index: 1100;
+}
+
+/* Show sidebar when opened */
+.sidebar.open {
+    left: 0;
+}
+
+/* Prevent content from shifting */
+.content {
+    margin-left: 0 !important;
+    margin-top: 50px;
+}
+}
+hr { 
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+    border-style: inset;
+    border-width: 1px;
+}     

@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="/app/static/css/settings.css">
+<!-- Add Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<style> 
+    .container {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background-color: #2a2424;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        margin-top: 20px;
+        color: #eee;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #3a3a3a;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #ccc;
+    }
+
+    .form-control {
+        background-color: #2f2b2b;
+        color: #eee;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 8px;
+    }
+
+    .form-control:focus {
+        background-color: #2f2b2b;
+        color: #fff;
+        border-color: #ff4081;
+        box-shadow: none;
+    }
+
+    .input-group .form-control {
+        border-right: none;
+    }
+
+    .input-group .btn {
+        background-color: #2f2b2b;
+        border-left: none;
+        border: 1px solid #444;
+        border-radius: 0 4px 4px 0;
+        color: #fff;
+    }
+
+    .input-group .btn:hover {
+        background-color: #3a3535;
+    }
+
+    .btn-primary {
+        background-color: #ff4081;
+        border-color: #ff4081;
+        color: white;
+        padding: 8px 20px;
+    }
+
+    .btn-primary:hover {
+        background-color: #e91e63;
+        border-color: #e91e63;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        background: none;
+        border: none;
+        color: #aaa;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #323232;
+        border-bottom: 2px solid #ff4081;
+        font-weight: bold;
+    }
+
+    .modal-content {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+
+    .modal-header, .modal-footer {
+        border-color: #444444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title m-0">Settings</h3>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">Profile</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">Password</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pin-tab" data-bs-toggle="tab" data-bs-target="#pin" type="button" role="tab" aria-controls="pin" aria-selected="false">PIN</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="settingsTabContent">
+                <!-- Profile Tab -->
+                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <h4 class="mb-4">Profile Information</h4>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_number" class="form-label">ID Number</label>
+                            <input type="text" class="form-control" id="id_number" name="id_number" value="{{ user.id_number }}" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Password Tab -->
+                <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
+                    <h4 class="mb-4">Change Password</h4>
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                <button class="btn" type="button" onclick="togglePassword('new_password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <button class="btn" type="button" onclick="togglePassword('confirm_password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- PIN Tab -->
+                <div class="tab-pane fade" id="pin" role="tabpanel" aria-labelledby="pin-tab">
+                    <h4 class="mb-4">Change PIN</h4>
+                    <form id="pinForm">
+                        <div class="mb-3">
+                            <label for="current_pin" class="form-label">Current PIN</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="current_pin" name="current_pin" required maxlength="4" pattern="\d{4}">
+                                <button class="btn" type="button" onclick="togglePassword('current_pin')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_pin" class="form-label">New PIN</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="new_pin" name="new_pin" required maxlength="4" pattern="\d{4}">
+                                <button class="btn" type="button" onclick="togglePassword('new_pin')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_pin" class="form-label">Confirm New PIN</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirm_pin" name="confirm_pin" required maxlength="4" pattern="\d{4}">
+                                <button class="btn" type="button" onclick="togglePassword('confirm_pin')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Change PIN</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<!-- Add jQuery and Toastr JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    // Configure Toastr
+    toastr.options = {
+        "closeButton": true,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "300",
+        "hideDuration": "1000",
+        "timeOut": "5000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    };
+
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const button = input.nextElementSibling;
+        const icon = button.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function setLoading(button, isLoading) {
+        if (isLoading) {
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            button.disabled = true;
+        } else {
+            button.innerHTML = button.getAttribute('data-original-text');
+            button.disabled = false;
+        }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const updatedData = {};
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+        
+        for (let [key, value] of formData.entries()) {
+            if (value !== this.elements[key].defaultValue) {
+                updatedData[key] = value;
+            }
+        }
+        
+        if (Object.keys(updatedData).length === 0) {
+            toastr.info('No changes detected');
+            return;
+        }
+        
+        setLoading(submitButton, true);
+        
+        axios.patch('/update-profile', updatedData)
+            .then(function (response) {
+                toastr.success('Profile updated successfully');
+                // Update the default values of the form fields
+                for (let key in updatedData) {
+                    document.getElementById(key).defaultValue = updatedData[key];
+                }
+            })
+            .catch(function (error) {
+                console.error('Error updating profile:', error);
+                toastr.error('Error updating profile');
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
+
+    // Password change form submission
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+
+        if (newPassword !== confirmPassword) {
+            toastr.error('New password and confirm password do not match');
+            return;
+        }
+
+        const passwordData = {
+            new_password: newPassword
+        };
+
+        setLoading(submitButton, true);
+
+        axios.patch('/update-password', passwordData)
+            .then(function (response) {
+                toastr.success('Password updated successfully');
+                // Clear the form
+                document.getElementById('passwordForm').reset();
+            })
+            .catch(function (error) {
+                console.error('Error updating password:', error);
+                toastr.error('Error updating password: ' + (error.response?.data?.detail || 'Unknown error'));
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
+
+    // PIN change form submission
+    document.getElementById('pinForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const currentPin = document.getElementById('current_pin').value;
+        const newPin = document.getElementById('new_pin').value;
+        const confirmPin = document.getElementById('confirm_pin').value;
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+
+        if (newPin !== confirmPin) {
+            toastr.error('New PIN and confirm PIN do not match');
+            return;
+        }
+
+        const pinData = {
+            current_pin: currentPin,
+            new_pin: newPin
+        };
+
+        setLoading(submitButton, true);
+
+        axios.patch('/update-pin', pinData)
+            .then(function (response) {
+                toastr.success('PIN updated successfully');
+                // Clear the form
+                document.getElementById('pinForm').reset();
+            })
+            .catch(function (error) {
+                console.error('Error updating PIN:', error);
+                toastr.error('Error updating PIN: ' + (error.response?.data?.detail || 'Unknown error'));
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
+</script>
+{% endblock %}
