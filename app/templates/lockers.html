@@ -1,104 +1,117 @@
 {% extends 'base.html' %}
 
 {% block title %}Lockers{% endblock %}
+
 {% block head %}
 <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="/app/static/css/users.css">
+<style>
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .gridjs {
+    min-width: 800px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="card mt-4">
-    <div class="card-body">
-        <div class="card-header">
-            <h3 class="card-title m-0">Lockers</h3>
-            <button type="button" class="btn btn-primary btn-add-locker" data-bs-toggle="modal" data-bs-target="#addLockerModal">
-                <i class="fas fa-plus"></i> Add Locker
-            </button>
-        </div>
-        <div id="locker-grid-table"></div>
+  <div class="card-body">
+    <div class="card-header">
+      <h3 class="card-title m-0">Lockers</h3>
+      <button type="button" class="btn btn-primary btn-add-locker" data-bs-toggle="modal" data-bs-target="#addLockerModal">
+        <i class="fas fa-plus"></i> Add Locker
+      </button>
     </div>
+
+    <div class="table-responsive">
+      <div id="locker-grid-table"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Add Locker Modal -->
 <div class="modal fade" id="addLockerModal" tabindex="-1" aria-labelledby="addLockerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addLockerModalLabel">Add New Locker</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addLockerForm">
-                    <div class="mb-3">
-                        <label for="locker_name" class="form-label">Locker Name*</label>
-                        <input type="text" class="form-control" id="locker_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="relay_pin" class="form-label">Relay Pin*</label>
-                        <input type="number" class="form-control" id="relay_pin" required>
-                    </div>                    
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveLocker">Save Locker</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addLockerModalLabel">Add New Locker</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addLockerForm">
+          <div class="mb-3">
+            <label for="locker_name" class="form-label">Locker Name*</label>
+            <input type="text" class="form-control" id="locker_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="relay_pin" class="form-label">Relay Pin*</label>
+            <input type="number" class="form-control" id="relay_pin" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveLocker">Save Locker</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Edit Locker Modal -->
 <div class="modal fade" id="editLockerModal" tabindex="-1" aria-labelledby="editLockerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editLockerModalLabel">Edit Locker</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editLockerForm">
-                    <input type="hidden" id="editLockerId">
-                    <div class="mb-3">
-                        <label for="editLockerName" class="form-label">Locker Name</label>
-                        <input type="text" class="form-control" id="editLockerName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRelayPin" class="form-label">Relay Pin</label>
-                        <input type="number" class="form-control" id="editRelayPin" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editIsAvailable" class="form-label">Is Available?</label>
-                        <select class="form-select" id="editIsAvailable">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="updateLocker">Update Locker</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editLockerModalLabel">Edit Locker</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editLockerForm">
+          <input type="hidden" id="editLockerId">
+          <div class="mb-3">
+            <label for="editLockerName" class="form-label">Locker Name</label>
+            <input type="text" class="form-control" id="editLockerName" required>
+          </div>
+          <div class="mb-3">
+            <label for="editRelayPin" class="form-label">Relay Pin</label>
+            <input type="number" class="form-control" id="editRelayPin" required>
+          </div>
+          <div class="mb-3">
+            <label for="editIsAvailable" class="form-label">Is Available?</label>
+            <select class="form-select" id="editIsAvailable">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="updateLocker">Update Locker</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Delete Locker Modal -->
 <div class="modal fade" id="deleteLockerModal" tabindex="-1" aria-labelledby="deleteLockerModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title" id="deleteLockerModalLabel">Delete Locker</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-              <p>Are you sure you want to delete: <strong id="deleteLockerName"></strong>?</p>
-          </div>
-          <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-danger" id="confirmDeleteLocker">Confirm Delete</button>
-          </div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteLockerModalLabel">Delete Locker</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete: <strong id="deleteLockerName"></strong>?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteLocker">Confirm Delete</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -110,40 +123,42 @@
 
   const lockerGrid = new gridjs.Grid({
     columns: [
-  { name: 'ID', hidden: true }, // this will hold the ID internally
-  'Locker Name',
-  'Relay Pin',
-  'Available',
-  {
-    name: 'Actions',
-    formatter: (_, row) => gridjs.html(`
-      <div class="action-buttons d-flex gap-2 justify-content-center">
-        <button class="btn btn-sm btn-outline-secondary edit-locker" data-id="${row.cells[0].data}">
-          <i class="fas fa-edit me-1"></i> Edit
-        </button>
-        <button class="btn btn-sm btn-outline-danger delete-locker" style="width: 10px;" data-id="${row.cells[0].data}">
-          <i class="fas fa-trash me-1"></i> Delete
-        </button>
-      </div>
-    `)
-  }
-],
-  data: [],
-  search: true,
-  pagination: {
-    limit: 8
-  }
-}).render(document.getElementById("locker-grid-table"));
+      { name: 'ID', hidden: true },
+      'Locker Name',
+      'Relay Pin',
+      'Available',
+      {
+        name: 'Actions',
+        formatter: (_, row) => gridjs.html(`
+          <div class="action-buttons d-flex gap-2 justify-content-center">
+            <button class="btn btn-sm btn-outline-secondary edit-locker" data-id="${row.cells[0].data}">
+              <i class="fas fa-edit me-1"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-locker" style="width: 10px;" data-id="${row.cells[0].data}">
+              <i class="fas fa-trash me-1"></i> Delete
+            </button>
+          </div>
+        `)
+      }
+    ],
+    data: [],
+    search: true,
+    pagination: {
+      limit: 8
+    }
+  }).render(document.getElementById("locker-grid-table"));
 
   function refreshLockerData() {
     fetch('/admin/lockers')
       .then(res => res.json())
-      .then(data => lockerGrid.updateConfig({ data: data.map(l => [
-        l.id,
-        l.name,
-        l.relay_pin,
-        l.is_available ? "Yes" : "No"
-      ]) }).forceRender());
+      .then(data => lockerGrid.updateConfig({
+        data: data.map(l => [
+          l.id,
+          l.name,
+          l.relay_pin,
+          l.is_available ? "Yes" : "No"
+        ])
+      }).forceRender());
   }
 
   document.getElementById("saveLocker").addEventListener("click", () => {
@@ -177,11 +192,11 @@
     }
 
     if (e.target.closest(".delete-locker")) {
-    selectedLockerId = e.target.closest(".delete-locker").dataset.id;
-    const lockerName = e.target.closest("tr").querySelector("td:nth-child(1)").textContent;
-    document.getElementById("deleteLockerName").textContent = lockerName;
-    new bootstrap.Modal(document.getElementById("deleteLockerModal")).show();
-  }
+      selectedLockerId = e.target.closest(".delete-locker").dataset.id;
+      const lockerName = e.target.closest("tr").querySelector("td:nth-child(1)").textContent;
+      document.getElementById("deleteLockerName").textContent = lockerName;
+      new bootstrap.Modal(document.getElementById("deleteLockerModal")).show();
+    }
   });
 
   document.getElementById("updateLocker").addEventListener("click", () => {

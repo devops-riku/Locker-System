@@ -261,7 +261,7 @@ async def register_super_admin(super_admin: SuperAdminCreate):
 
     # Create authentication user and super admin
     create_auth_user(super_admin.email, super_admin.password)
-    CreateUser(email=super_admin.email, is_super_admin=True)
+    CreateUser(first_name="Super Admin", email=super_admin.email, is_super_admin=True)
 
     return {"message": "Super admin created successfully."}
 
