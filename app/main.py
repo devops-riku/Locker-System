@@ -96,6 +96,6 @@ threading.Thread(target=mqtt_setup, daemon=True).start()
 @app.get("/", tags=["Root"])
 async def root(request: Request):
     if get_user_session(request).get('is_super_admin', False):
-        return RedirectResponse(url="/lockers")
+        return RedirectResponse(url="/users")
     return RedirectResponse(url="/my-locker")
 

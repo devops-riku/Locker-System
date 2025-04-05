@@ -28,6 +28,7 @@ class UserCredential(Base):
     rfid_serial_number = Column(String, nullable=False)
     pin_number = Column(Integer, nullable=False)
     is_current_holder = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships

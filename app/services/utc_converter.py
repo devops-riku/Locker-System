@@ -18,4 +18,4 @@ def utc_to_ph(utc_datetime_str):
     ph_datetime = utc_datetime.astimezone(ph_timezone)
 
     # Format the datetime as a string in the desired format
-    return ph_datetime.strftime('%I:%M:%S %p')
+    return ph_datetime.strftime('%m-%d-%Y | %I:%M:%S %p')

@@ -109,49 +109,66 @@
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form id="editUserForm">
-          <input type="hidden" id="editUserId">
-          <div class="modal-header">
-            <h5 class="modal-title">Edit User</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editFirstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="editFirstName" required>
           </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="editFirstName" class="form-label">First Name</label>
-              <input type="text" class="form-control" id="editFirstName" required>
-            </div>
-            <div class="mb-3">
-              <label for="editLastName" class="form-label">Last Name</label>
-              <input type="text" class="form-control" id="editLastName" required>
-            </div>            
-            <div class="mb-3">
-              <label for="editIdNumber" class="form-label">ID Number</label>
-              <input type="text" class="form-control" id="editIdNumber" required>
-            </div>
-            <div class="mb-3">
-              <label for="editAddress" class="form-label">Address</label>
-              <input type="text" class="form-control" id="editAddress" required>
-            </div>
-            <div class="mb-3">
-                <label for="editEmail" class="form-label">Email</label>
-                <input type="email" class="form-control" id="editEmail" readonly required>
-              </div>
-            <div class="mb-3">
-              <label for="editLocker" class="form-label">Assigned Locker</label>
-              <select class="form-select" id="editLocker" required></select>
-            </div>
+          <div class="mb-3">
+            <label for="editLastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="editLastName" required>
+          </div>            
+          <div class="mb-3">
+            <label for="editIdNumber" class="form-label">ID Number</label>
+            <input type="text" class="form-control" id="editIdNumber" required>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Update</button>
-
+          <div class="mb-3">
+            <label for="editAddress" class="form-label">Address</label>
+            <input type="text" class="form-control" id="editAddress" required>
           </div>
-        </form>
-      </div>
+          <div class="mb-3">
+              <label for="editEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="editEmail" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="editLocker" class="form-label">Assigned Locker</label>
+            <select class="form-select" id="editLocker" required></select>
+          </div>
+          <div class="mb-3">
+            <label for="editRfidSerialNumber" class="form-label">RFID Serial Number</label>
+            <input type="text" class="form-control" id="editRfidSerialNumber" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPinNumber" class="form-label">PIN Number</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="editPinNumber" maxlength="4" required>
+              <button class="btn btn-outline-secondary" type="button" id="toggleEditPin">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small class="text-muted">4-digit numeric PIN</small>
+          </div>
+          <div class="mb-3 form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="editIsActive">
+            <label class="form-check-label" for="editIsActive">Is Active</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
   
 
 <!-- Delete User Modal -->

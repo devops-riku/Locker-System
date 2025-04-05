@@ -19,6 +19,15 @@ const strengthText = document.querySelector('.strength-text');
 
 populateLockerList();
 
+// Toggle PIN visibility
+document.getElementById('toggleEditPin').addEventListener('click', function() {
+    const pinInput = document.getElementById('editPinNumber');
+    const type = pinInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    pinInput.setAttribute('type', type);
+    this.querySelector('i').classList.toggle('fa-eye');
+    this.querySelector('i').classList.toggle('fa-eye-slash');
+  });
+
 
 togglePassword.addEventListener('click', function (e) {
     // Toggle the type attribute
@@ -264,6 +273,9 @@ document.getElementById('editUserForm').addEventListener('submit', function (e) 
     const id_number = document.getElementById('editIdNumber').value;
     const address = document.getElementById('editAddress').value;
     const assigned_locker = document.getElementById('editLocker').value;
+    const pin_number = document.getElementById('editPinNumber').value;
+    const rfid_serial_number = document.getElementById('editRfidSerialNumber').value;
+    const is_active = document.getElementById('editIsActive').checked;
 
     const payload = {
         first_name,
@@ -271,7 +283,10 @@ document.getElementById('editUserForm').addEventListener('submit', function (e) 
         id_number,
         address,
         email,
-        assigned_locker
+        assigned_locker,
+        pin_number,
+        rfid_serial_number,
+        is_active
     };
 
     axios.put(`/admin/user/${id}`, payload)
@@ -289,7 +304,6 @@ document.getElementById('editUserForm').addEventListener('submit', function (e) 
             toastr.error("Failed to update user.");
         });
 });
-
 
 // Delete user functionality
 document.getElementById('confirmDeleteUser').addEventListener('click', function (e) {
@@ -382,6 +396,8 @@ function viewUser(id) {
                     <p><strong>ID Number:</strong> ${user.id_number}</p>
                     <p><strong>Address:</strong> ${user.address}</p>
                     <p><strong>Assigned Locker:</strong> ${user.credentials[0]?.locker?.name || 'Not Assigned'}</p>
+                    <p><strong>PIN Number:</strong> ${user.credentials[0]?.pin_number || 'Not Set'}</p>
+                    <p><strong>RFID Serial Number:</strong> ${user.credentials[0]?.rfid_serial_number || 'Not Set'}</p>
                 `;
                 document.getElementById('userDetails').innerHTML = userDetailsHtml;
 
@@ -408,6 +424,12 @@ function editUser(id) {
         document.getElementById('editIdNumber').value = user.id_number;
         document.getElementById('editEmail').value = user.email;
         document.getElementById('editAddress').value = user.address;
+        document.getElementById('editPinNumber').value = user.credentials[0]?.pin_number || '';
+        document.getElementById('editRfidSerialNumber').value = user.credentials[0]?.rfid_serial_number || '';
+        
+        // Set the is_active toggle
+        document.getElementById('editIsActive').checked = user.credentials[0]?.is_active || false;
+
 
         const lockerSelect = document.getElementById('editLocker');
         lockerSelect.innerHTML = '';
@@ -458,6 +480,7 @@ function editUser(id) {
         toastr.error("Failed to load user details or lockers.");
     });
 }
+
 
 function deleteUser(id) {
     fetch(`/admin/user/${id}`)
@@ -523,6 +546,8 @@ function populateLockerList() {
             console.error('Error fetching lockers:', error);
         });
 }
+
+
 
 
 

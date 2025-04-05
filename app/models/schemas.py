@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -51,9 +51,32 @@ class UpdateUserRequest(BaseModel):
     last_name: str
     id_number: str
     address: str
-    email: str
     assigned_locker: int
+    pin_number: str = Field(None, max_length=4)
+    rfid_serial_number: str = Field(None, min_length=8, max_length=12)
+    is_active: bool
 
 
 class HistoryLogRequest(BaseModel):
     action: str
+
+
+class PinValidationRequest(BaseModel):
+    pin: str
+
+
+class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    id_number: Optional[str] = None
+
+
+class PasswordUpdate(BaseModel):
+    new_password: str
+
+
+class PinUpdate(BaseModel):
+    current_pin: str
+    new_pin: str

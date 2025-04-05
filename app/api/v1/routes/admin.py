@@ -1,3 +1,5 @@
+import json
+import os
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 from sqlalchemy import desc
@@ -5,10 +7,11 @@ from sqlalchemy import desc
 from app.models.database import db_session
 from app.models.models import History, Locker, User, UserCredential
 from app.models.schemas import AddLockerRequest, CreateUserRequest, SuperAdminCreate, UpdateLockerRequest, UpdateUserRequest
-from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_session, is_super_admin
+from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_locker_info, get_user_session, is_super_admin
 from app.services.auth_service import create_auth_user, delete_auth_user
 from datetime import datetime
 import pytz
+from app.services.mqtt import mqtt_client
 
 from app.services.utc_converter import utc_to_ph
 
@@ -21,6 +24,7 @@ async def create_user(user: CreateUserRequest, request: Request):
     create_auth_user(user.email, user.password)
     CreateUser(user.first_name, user.last_name, user.id_number, user.address, user.email,
                user.locker_number, user.rfid_serial_number, user.pin_number)
+    
     UpdateLockerAvailability(locker_id=user.locker_number, is_available=False)
     return {"message": "User created successfully"}
 
@@ -67,12 +71,16 @@ async def get_user_lists(page_number: int = Query(1, ge=1), page_size: int = Que
                 {
                     "locker": {
                         "name": cred.locker.name if cred.locker else None
-                    }
+                    },
+                    "pin_number": cred.pin_number,
+                    "rfid_serial_number": cred.rfid_serial_number,
+                    "is_active": cred.is_active  # Add is_active status
                 }
                 for cred in user.credentials
             ]
         }
         user_list.append(user_dict)
+
 
     return {
         "total": total_users,
@@ -100,24 +108,54 @@ async def get_user(user_id: int):
                 "locker": {
                     "id": cred.locker.id if cred.locker else None,
                     "name": cred.locker.name if cred.locker else None
-                }
+                },
+                "pin_number": cred.pin_number,
+                "rfid_serial_number": cred.rfid_serial_number,
+                "is_active": cred.is_active  # Add is_active status
             }
             for cred in user.credentials
         ]
     }
 
-
 @router.put("/user/{user_id}")
-async def update_user(user_id: int, user: UpdateUserRequest):
+async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
     update_user = db_session.query(User).filter(User.id == user_id).first()
+    
+    if not update_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    payload = {
+        "user_id": update_user.id,
+        "pin": f"{user.pin_number}",
+        "rfid": f"{user.rfid_serial_number}",
+        "relay_pin": get_user_locker_info(user_id)[0].get("relay_pin"),
+        "is_active": user.is_active}
+    
+    json_payload = json.dumps(payload)
+    mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
+
     update_user.first_name = user.first_name
     update_user.last_name = user.last_name
     update_user.id_number = user.id_number
     update_user.address = user.address
 
     user_credentials = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first()
+    if not user_credentials:
+        raise HTTPException(status_code=404, detail="User credentials not found")
+
     user_credentials.locker_id = user.assigned_locker
+    
+    # Update PIN and RFID serial number
+    if user.pin_number:
+        user_credentials.pin_number = user.pin_number
+    if user.rfid_serial_number:
+        user_credentials.rfid_serial_number = user.rfid_serial_number
+
+    # Update is_active status
+    user_credentials.is_active = user.is_active
+
     db_session.commit()
+
     return {"message": "User updated successfully."}
 
 
@@ -125,10 +163,17 @@ async def update_user(user_id: int, user: UpdateUserRequest):
 async def delete_user(user_id: int):
     user = db_session.query(User).filter(User.id == user_id).first()
     locker_id = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first().locker_id
+    payload = {
+        "user_id": user_id,
+        "delete": True
+    }
+    mqtt_client.publish(os.getenv("MQTT_TOPIC"), json.dumps(payload))
     UpdateLockerAvailability(locker_id=locker_id, is_available=True)
     delete_auth_user(user.email)
     db_session.delete(user)
     db_session.commit()
+
+    
     return {"message": "User deleted successfully."}
 
 

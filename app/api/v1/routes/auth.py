@@ -5,6 +5,7 @@ from app.core.config import templates
 from app.models import schemas
 from app.services.admin_service import get_user_by_email, serialize_user
 from app.services.auth_service import init_reset_password, send_reset_password_link
+from app.services.history_logs import log_history
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ async def login_auth(request: Request, user: schemas.UserLoginRequest):
         user_data = get_user_by_email(user.email)
         request.session['user'] = serialize_user(user_data)
 
+        log_history(user_id=user_data.id, action="Logged in")
         # TODO: User Session
         return {"message": "Login successful!"}
 

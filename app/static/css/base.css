@@ -4,6 +4,7 @@ body, html {
     background-color: #ffdc5c;
     color: #181818;
     transition: margin-left 0.3s ease-in-out;
+    overflow: hidden;
     
 }
 

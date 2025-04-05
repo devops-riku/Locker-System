@@ -3,6 +3,8 @@
 {% block head %}
 <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="/app/static/css/settings.css">
+<!-- Add Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <style> 
     .container {
         max-width: 720px;
@@ -102,13 +104,13 @@
     }
 
     .modal-content {
-    background-color: #2c2c2c; /* Dark background */
-    color: #ffffff; /* Light text */
-}
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
 
-.modal-header, .modal-footer {
-    border-color: #444444; /* Dark border */
-}
+    .modal-header, .modal-footer {
+        border-color: #444444;
+    }
 </style>
 {% endblock %}
 
@@ -134,7 +136,7 @@
                 <!-- Profile Tab -->
                 <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                     <h4 class="mb-4">Profile Information</h4>
-                    <form method="POST" action="">
+                    <form id="profileForm">
                         <div class="mb-3">
                             <label for="first_name" class="form-label">First Name</label>
                             <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
@@ -164,16 +166,7 @@
                 <!-- Password Tab -->
                 <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
                     <h4 class="mb-4">Change Password</h4>
-                    <form method="POST" action="">
-                        <div class="mb-3">
-                            <label for="current_password" class="form-label">Current Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="current_password" name="current_password" required>
-                                <button class="btn" type="button" onclick="togglePassword('current_password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <form id="passwordForm">
                         <div class="mb-3">
                             <label for="new_password" class="form-label">New Password</label>
                             <div class="input-group">
@@ -201,7 +194,7 @@
                 <!-- PIN Tab -->
                 <div class="tab-pane fade" id="pin" role="tabpanel" aria-labelledby="pin-tab">
                     <h4 class="mb-4">Change PIN</h4>
-                    <form method="POST" action="">
+                    <form id="pinForm">
                         <div class="mb-3">
                             <label for="current_pin" class="form-label">Current PIN</label>
                             <div class="input-group">
@@ -241,7 +234,29 @@
 {% endblock %}
 
 {% block script %}
+<!-- Add jQuery and Toastr JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script>
+    // Configure Toastr
+    toastr.options = {
+        "closeButton": true,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "300",
+        "hideDuration": "1000",
+        "timeOut": "5000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    };
+
     function togglePassword(inputId) {
         const input = document.getElementById(inputId);
         const button = input.nextElementSibling;
@@ -257,5 +272,125 @@
             icon.classList.add('fa-eye');
         }
     }
+
+    function setLoading(button, isLoading) {
+        if (isLoading) {
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            button.disabled = true;
+        } else {
+            button.innerHTML = button.getAttribute('data-original-text');
+            button.disabled = false;
+        }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const updatedData = {};
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+        
+        for (let [key, value] of formData.entries()) {
+            if (value !== this.elements[key].defaultValue) {
+                updatedData[key] = value;
+            }
+        }
+        
+        if (Object.keys(updatedData).length === 0) {
+            toastr.info('No changes detected');
+            return;
+        }
+        
+        setLoading(submitButton, true);
+        
+        axios.patch('/update-profile', updatedData)
+            .then(function (response) {
+                toastr.success('Profile updated successfully');
+                // Update the default values of the form fields
+                for (let key in updatedData) {
+                    document.getElementById(key).defaultValue = updatedData[key];
+                }
+            })
+            .catch(function (error) {
+                console.error('Error updating profile:', error);
+                toastr.error('Error updating profile');
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
+
+    // Password change form submission
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+
+        if (newPassword !== confirmPassword) {
+            toastr.error('New password and confirm password do not match');
+            return;
+        }
+
+        const passwordData = {
+            new_password: newPassword
+        };
+
+        setLoading(submitButton, true);
+
+        axios.patch('/update-password', passwordData)
+            .then(function (response) {
+                toastr.success('Password updated successfully');
+                // Clear the form
+                document.getElementById('passwordForm').reset();
+            })
+            .catch(function (error) {
+                console.error('Error updating password:', error);
+                toastr.error('Error updating password: ' + (error.response?.data?.detail || 'Unknown error'));
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
+
+    // PIN change form submission
+    document.getElementById('pinForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const currentPin = document.getElementById('current_pin').value;
+        const newPin = document.getElementById('new_pin').value;
+        const confirmPin = document.getElementById('confirm_pin').value;
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.setAttribute('data-original-text', submitButton.innerHTML);
+
+        if (newPin !== confirmPin) {
+            toastr.error('New PIN and confirm PIN do not match');
+            return;
+        }
+
+        const pinData = {
+            current_pin: currentPin,
+            new_pin: newPin
+        };
+
+        setLoading(submitButton, true);
+
+        axios.patch('/update-pin', pinData)
+            .then(function (response) {
+                toastr.success('PIN updated successfully');
+                // Clear the form
+                document.getElementById('pinForm').reset();
+            })
+            .catch(function (error) {
+                console.error('Error updating PIN:', error);
+                toastr.error('Error updating PIN: ' + (error.response?.data?.detail || 'Unknown error'));
+            })
+            .finally(function () {
+                setLoading(submitButton, false);
+            });
+    });
 </script>
 {% endblock %}
