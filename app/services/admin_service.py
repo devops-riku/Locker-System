@@ -45,15 +45,16 @@ def CreateUser(first_name=None, last_name=None, id_number=None, address=None, em
         db_session.add(user)
         db_session.flush()
 
-        payload = {
-        "user_id": user.id,
-        "pin": f"{pin_number}",
-        "rfid": f"{rfid_serial_number}",
-        "relay_pin": get_locker_by_id.relay_pin,
-        "is_active": True
-    }
-        json_payload = json.dumps(payload)
-        mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
+        if not is_super_admin:
+            payload = {
+            "user_id": user.id,
+            "pin": f"{pin_number}",
+            "rfid": f"{rfid_serial_number}",
+            "relay_pin": get_locker_by_id.relay_pin,
+            "is_active": True
+        }
+            json_payload = json.dumps(payload)
+            mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
 
         if id_number:
             user_credentials = UserCredential(user_id=user.id, locker_id=locker_number,

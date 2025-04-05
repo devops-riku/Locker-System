@@ -80,3 +80,8 @@ class PasswordUpdate(BaseModel):
 class PinUpdate(BaseModel):
     current_pin: str
     new_pin: str
+
+
+class AddHistoryLogRequest(BaseModel):
+    user_id: int
+    action: str

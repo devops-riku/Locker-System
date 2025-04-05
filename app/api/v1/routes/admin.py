@@ -7,11 +7,12 @@ from sqlalchemy import desc
 from app.core.config import get_supabase_client
 from app.models.database import db_session
 from app.models.models import History, Locker, User, UserCredential
-from app.models.schemas import AddLockerRequest, CreateUserRequest, SuperAdminCreate, UpdateLockerRequest, UpdateUserRequest
+from app.models.schemas import *
 from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_locker_info, get_user_session, is_super_admin
 from app.services.auth_service import create_auth_user, delete_auth_user
 from datetime import datetime
 import pytz
+from app.services.history_logs import log_history
 from app.services.mqtt import mqtt_client
 
 from app.services.utc_converter import utc_to_ph
@@ -288,3 +289,10 @@ async def get_history(request: Request):
     ]
 
     return {"history": history_list}
+
+
+
+@router.post("/add-history")
+async def add_history(request: Request, data: AddHistoryLogRequest):
+    log_history(user_id=data.user_id, action=data.action)
+    return {"message": "History log added successfully."}
