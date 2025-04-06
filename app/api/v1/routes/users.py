@@ -10,7 +10,7 @@ from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
 from app.services.mqtt import mqtt_client
-
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -92,26 +92,60 @@ def search_page(request: Request):
 def c_(request: Request):
     return request.session.clear()
 
-
+failed_attempts = {} 
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
     user_id = get_user_session(request).get('id')
+    
+    # Check if user is in cooldown
+    if user_id in failed_attempts:
+        last_attempt = failed_attempts[user_id]
+        if 'lockout_time' in last_attempt and datetime.now() < last_attempt['lockout_time']:
+            remaining_time = (last_attempt['lockout_time'] - datetime.now()).seconds
+            return {
+                "valid": False,
+                "message": f"Too many attempts. Please try again in {remaining_time} seconds",
+                "cooldown": remaining_time
+            }
+    
     user_creds = get_user_creds(user_id)
-    print(user_creds[0])
-   
-    # First, check if user credentials exist
+    
+    
     if not user_creds:
         return {"valid": False, "message": "User credentials not found"}
 
-    # Then, check if the account is active
+    
     if not user_creds[0].get('is_active', False):
         return {"valid": False, "message": "Account deactivated"}
 
-    # If the account is active, validate the PIN
+    
     if str(pin_request.pin) == str(user_creds[0]['pin_number']):
+        
+        if user_id in failed_attempts:
+            del failed_attempts[user_id]
         return {"valid": True}
     else:
-        return {"valid": False, "message": "Invalid PIN"}
+       
+        if user_id not in failed_attempts:
+            failed_attempts[user_id] = {'count': 0}
+        
+        failed_attempts[user_id]['count'] += 1
+      
+        if failed_attempts[user_id]['count'] >= 3:
+            lockout_time = datetime.now() + timedelta(minutes=2)
+            failed_attempts[user_id]['lockout_time'] = lockout_time
+            return {
+                "valid": False,
+                "message": "Too many failed attempts. Please try again in 2 minutes",
+                "cooldown": 120
+            }
+        
+        remaining_attempts = 3 - failed_attempts[user_id]['count']
+        return {
+            "valid": False,
+            "message": f"Invalid PIN. {remaining_attempts} attempts remaining",
+            "remaining_attempts": remaining_attempts
+        }
     
 
 # ------- Update user profile -------

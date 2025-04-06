@@ -92,6 +92,32 @@
         let $progressContainer = $(".progress-container");
         let $progressBar = $(".progress-bar");
         let $pinInput = $("#pinInput");
+        let cooldownInterval = null;
+        let remainingAttempts = 3;
+
+        // Function to handle cooldown
+        function startCooldown(seconds) {
+            $lock.prop("disabled", true);
+            $pinInput.prop("disabled", true);
+            $countdown.text(`Please wait ${seconds} seconds before trying again`);
+            $progressContainer.show();
+            
+            let remaining = seconds;
+            cooldownInterval = setInterval(() => {
+                remaining--;
+                $countdown.text(`Please wait ${remaining} seconds before trying again`);
+                $progressBar.css("width", (remaining / seconds) * 100 + "%");
+                
+                if (remaining <= 0) {
+                    clearInterval(cooldownInterval);
+                    $lock.prop("disabled", false);
+                    $pinInput.prop("disabled", false).val('');
+                    $countdown.text("");
+                    $progressContainer.hide();
+                    remainingAttempts = 3;
+                }
+            }, 1000);
+        }
 
         // Allow only numbers in the PIN input
         $pinInput.on('input', function() {
@@ -111,17 +137,23 @@
                 // Validate the pin via Axios
                 axios.post('/validate-pin', { pin: enteredPin })
                 .then(response => {
-                    console.log(response.data);
+                    if (response.data.cooldown) {
+                        startCooldown(response.data.cooldown);
+                        $lock.prop("checked", true);
+                        return;
+                    }
+                    
                     if (!response.data.valid) {
-                        if (response.data.message === "Account deactivated") {
-                            toastr.error('Your account has been deactivated. Please contact an administrator.');
+                        if (response.data.remaining_attempts !== undefined) {
+                            remainingAttempts = response.data.remaining_attempts;
+                            toastr.error(`${response.data.message}`);
                         } else {
                             toastr.error(response.data.message || 'PIN is incorrect');
                         }
                         $lock.prop("checked", true);
                         return;
                     }
-
+                    
                     toastr.success('Locker UNLOCKED');
                     console.log("Locker UNLOCKED");
                     

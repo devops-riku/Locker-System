@@ -185,3 +185,13 @@
     .modal-body::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
+
+
+#grid-table {
+    overflow-x: auto;
+  }
+  
+  .gridjs-table {
+    font-size: 0.875rem;
+  }
+  

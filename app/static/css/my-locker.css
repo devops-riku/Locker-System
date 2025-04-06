@@ -61,7 +61,10 @@ display: inline-block;
 margin-bottom: 15px;
 box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
 }
+
 .countdown {
-color: white;
+    color: #ff5555;
+    font-size: 14px;
+    margin-top: 5px;
 }
 
