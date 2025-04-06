@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}History{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+<link rel="stylesheet" href="/app/static/css/history-logs.css">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="card-header">
+            <h3 class="card-title">History</h3>
+            <button id="print-button" class="btn btn-primary btn-print">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+        <!-- Placeholder for Grid.js Table -->
+        <div id="grid-table"></div>
+    </div>
+</div>
+
+<iframe id="print-iframe" style="display: none;"></iframe>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/admin/get_history")
+            .then(response => response.json())
+            .then(data => {
+                const formattedData = data.history.map(record => [
+                    record.author,
+                    record.action,
+                    record.datetime
+                ]);
+
+                const grid = new gridjs.Grid({
+                    columns: ["Author", "Action", "Timestamp"],
+                    data: formattedData,
+                    sort: true,
+                    pagination: { limit: 7 },
+                    search: true,
+                    resizable: true,
+                    style: {
+                        table: {
+                            'border-collapse': 'collapse',
+                            'width': '100%'
+                        },
+                        th: {
+                            'background-color': '#252525',
+                            'color': '#e0e0e0',
+                            'border-bottom': '2px solid #333',
+                            'text-align': 'left'
+                        },
+                        td: {
+                            'background-color': '#1e1e1e',
+                            'color': '#e0e0e0',
+                            'border-bottom': '1px solid #333',
+                            'padding': '8px'
+                        }
+                    }
+                }).render(document.getElementById("grid-table"));
+
+                // Add print functionality
+                document.getElementById("print-button").addEventListener("click", () => {
+                    let tableHtml = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Author</th>
+                                    <th>Action</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.history.forEach(record => {
+                        tableHtml += `
+                            <tr>
+                                <td>${record.author}</td>
+                                <td>${record.action}</td>
+                                <td>${record.datetime}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHtml += `</tbody></table>`;
+
+                    const printIframe = document.getElementById("print-iframe").contentWindow;
+                    printIframe.document.body.innerHTML = `
+                        <style>
+                            @media print {
+                                body { font-family: Arial, sans-serif; }
+                                table { width: 100%; border-collapse: collapse; }
+                                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                                th { background-color: #f8f9fa; }
+                            }
+                        </style>
+                        <h2>History Logs</h2>
+                        ${tableHtml}
+                    `;
+
+                    printIframe.focus();
+                    printIframe.print();
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                iziToast.error({
+                    title: "Error",
+                    message: "Failed to load history data. Please try again later.",
+                    position: "topRight"
+                });
+            });
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+{% endblock %}
