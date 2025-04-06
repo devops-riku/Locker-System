@@ -24,7 +24,6 @@ function toggleSidebar() {
         });
     });
 
-    
     let sidebar = document.getElementById("sidebar");
     let burger = document.querySelector(".burger");
 
@@ -37,9 +36,13 @@ function toggleSidebar() {
     }
 }
 
-
-
 function logout() {
+    // Close sidebar before showing logout modal
+    let sidebar = document.getElementById("sidebar");
+    let burger = document.querySelector(".burger");
+    sidebar.classList.remove("open");
+    burger.classList.remove("active");
+
     $('#logoutModal').modal('show');
 }
 
@@ -61,4 +64,3 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
-
