@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up | Locker System</title>
+
+    <!-- Halfmoon CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/halfmoon/css/halfmoon.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="/app/static/css/login.css" />
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+        }
+
+        .center-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .logo {
+            width: 80px;
+            display: block;
+            margin: 0 auto 1rem auto;
+        }
+
+        .welcome-text {
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center-container">
+        <div class="login-container animate__animated animate__fadeIn">
+            <img src="https://img.freepik.com/free-vector/locker_53876-25496.jpg" alt="Logo" class="logo animate__animated animate__zoomIn" />
+            <h1 class="welcome-text animate__animated animate__fadeInDown">Create an Account</h1>
+
+            <div class="divider text-center"><span>Sign Up with Email</span></div>
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div class="form-group">
+                        <label for="firstname">First Name</label>
+                        <input type="text" class="form-control" id="firstname" placeholder="Enter your first name" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="idnumber">ID Number</label>
+                        <input type="text" class="form-control" id="idnumber" placeholder="Enter your ID number" required />
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Enter your password" required />
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="form-group">
+                        <label for="lastname">Last Name</label>
+                        <input type="text" class="form-control" id="lastname" placeholder="Enter your last name" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address" placeholder="Enter your address" maxlength="100" required />
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-2">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter your email" required />
+            </div>
+
+            <div class="d-flex text-center mt-3">
+                <button type="button" class="btn btn-full btn-black w-100 animate__animated animate__pulse" onclick="signUp()" id="signUpButton">Sign Up</button>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="/login">Already have an account? Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/halfmoon/js/halfmoon.min.js"></script>
+
+    <script>
+        function signUp() {
+            const firstname = document.getElementById('firstname').value.trim();
+            const lastname = document.getElementById('lastname').value.trim();
+            const idnumber = document.getElementById('idnumber').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const signUpButton = document.getElementById("signUpButton");
+
+            if (!firstname || !lastname || !idnumber || !address || !email || !password || !confirmPassword) {
+                toastr.warning("Please fill in all fields.");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                toastr.error("Passwords do not match.");
+                return;
+            }
+
+            signUpButton.disabled = true;
+            signUpButton.innerHTML = "Signing up...";
+
+            axios.post('/api/v1/auth/register', {
+                firstname,
+                lastname,
+                idnumber,
+                address,
+                email,
+                password
+            })
+                .then(response => {
+                    toastr.success(response.data.message || "Registration successful!");
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1500);
+                })
+                .catch(error => {
+                    let errorMessage = 'An error occurred during registration.';
+                    if (error.response && error.response.data.detail) {
+                        errorMessage = error.response.data.detail;
+                    }
+                    toastr.error(errorMessage);
+                    signUpButton.disabled = false;
+                    signUpButton.innerHTML = "Sign Up";
+                });
+        }
+    </script>
+</body>
+
+</html>

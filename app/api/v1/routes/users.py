@@ -21,6 +21,10 @@ router = APIRouter()
 async def show_super_admin_form(request: Request):
     return templates.TemplateResponse("superadmin.html", {"request": request})
 
+@router.get('/sign-up', response_class=HTMLResponse)
+async def sign_up_page(request: Request):
+    """Render the sign-up page."""
+    return templates.TemplateResponse('sign-up.html', {'request': request})
 
 @router.get('/login', response_class=HTMLResponse)
 async def login_page(request: Request):
