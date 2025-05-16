@@ -39,7 +39,7 @@ class ContentSecurityPolicyMiddleware(BaseHTTPMiddleware):
 async def sessions_middleware(request: Request, call_next):
     # List of paths that should not be checked for session
     public_paths = [
-        "/login", "/api/v1/auth/login", "/reset-email-password", "/new-password",
+        "/sign-up", "/login", "/api/v1/auth/login", "/reset-email-password", "/new-password",
         "/api/v1/auth/request-password-reset", "/api/v1/auth/reset-password",
         "/register-super-admin", "/admin/register-super-admin"
     ]

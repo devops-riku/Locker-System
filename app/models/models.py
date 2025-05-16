@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.models.database import Base, engine
 from datetime import datetime, timezone
 
+
 class User(Base):
     __tablename__ = "users" 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -13,6 +14,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     is_super_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
     created_by = Column(String, nullable=True)
     
     # Relationships

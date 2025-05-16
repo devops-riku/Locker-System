@@ -137,24 +137,28 @@
                 <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                     <h4 class="mb-4">Profile Information</h4>
                     <form id="profileForm">
-                        <div class="mb-3">
-                            <label for="first_name" class="form-label">First Name</label>
+                       <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
                         </div>
+
                         <div class="mb-3">
-                            <label for="last_name" class="form-label">Last Name</label>
+                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
                         </div>
+
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
                         </div>
+
                         <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
+                            <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}" maxlength="100" required>
                         </div>
+
                         <div class="mb-3">
-                            <label for="id_number" class="form-label">ID Number</label>
+                            <label for="id_number" class="form-label">ID Number <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="id_number" name="id_number" value="{{ user.id_number }}" required>
                         </div>
                         <div class="form-actions">
