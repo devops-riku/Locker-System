@@ -116,12 +116,12 @@
         <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
         <p class="profile-email">{{ user.email }}</p>
 
-        <div class="profile-info">
+        <!-- <div class="profile-info">
             <div class="profile-info-label">ID Number</div>
             <div class="profile-info-value">
                 {{ user.id_number }}
             </div>
-        </div>
+        </div> -->
         <div class="profile-info">
             <div class="profile-info-label">Address</div>
             <div class="profile-info-value">
@@ -142,7 +142,7 @@
         </div>
 
         {% if user.credentials %}
-            <div class="profile-info">
+            <!-- <div class="profile-info">
                 <div class="profile-info-label">RFID Serial Number</div>
                 <div class="profile-info-value">
                     {% for credential in user.credentials %}
@@ -150,7 +150,7 @@
                     {% endfor %}
                     {{ rfid_number }}
                 </div>
-            </div>
+            </div> -->
             <!-- <div class="profile-info">
                 <div class="profile-info-label">Pin Number</div>
                 <div class="profile-info-value" id="pin-mask">
