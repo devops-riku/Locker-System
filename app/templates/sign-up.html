@@ -50,7 +50,8 @@
 
 <body>
     <div class="center-container">
-        <div class="login-container animate__animated animate__fadeIn">
+        <form class="login-container animate__animated animate__fadeIn" onsubmit="signUp(event)">
+
             <img src="https://img.freepik.com/free-vector/locker_53876-25496.jpg" alt="Logo" class="logo animate__animated animate__zoomIn" />
             <h1 class="welcome-text animate__animated animate__fadeInDown">Create an Account</h1>
 
@@ -98,13 +99,13 @@
             </div>
 
             <div class="d-flex text-center mt-3">
-                <button type="button" class="btn btn-full btn-black w-100 animate__animated animate__pulse" onclick="signUp()" id="signUpButton">Sign Up</button>
+                <button type="submit" class="btn btn-full btn-black w-100 animate__animated animate__pulse" id="signUpButton">Sign Up</button>
             </div>
 
             <div class="text-center mt-3">
                 <a href="/login">Already have an account? Sign In</a>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Libraries -->
@@ -114,7 +115,9 @@
     <script src="https://cdn.jsdelivr.net/npm/halfmoon/js/halfmoon.min.js"></script>
 
     <script>
-        function signUp() {
+        function signUp(event) {
+            event.preventDefault(); // Prevent actual form submission
+
             const firstname = document.getElementById('firstname').value.trim();
             const lastname = document.getElementById('lastname').value.trim();
             const idnumber = document.getElementById('idnumber').value.trim();

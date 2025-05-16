@@ -34,21 +34,24 @@
             <span>Sign In with Email</span>
         </div>
 
-        <div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
-            </div>
+        <form onsubmit="signIn(event)">
+            <div>
+        <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                </div>
 
-            <div class="form-group mt-2">
-                <label for="password">Password</label>
-                <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
-            </div>
+                <div class="form-group mt-2">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                </div>
 
-            <div class="d-flex text-center mt-3">
-                <button type="button" class="btn btn-full btn-black animate__animated animate__pulse" onclick="signIn()" id="signInButton">Sign In</button>
-            </div>            
+                <div class="d-flex text-center mt-3">
+                    <button type="submit" class="btn btn-full btn-black animate__animated animate__pulse" id="signInButton">Sign In</button>
+
+                </div>  
         </div>
+                  
 
         <div class="text-center mt-3">
             <a href="/reset-email-password">Forgot password?</a>
@@ -56,6 +59,8 @@
         <div class="text-center mt-3">
             <a href="/sign-up" class="btn btn-md mt-2">Don't have an account? Sign Up</a>
         </div>
+        </form>
+        
     </div>
 
     <!-- Load Libraries in Proper Order -->
@@ -85,52 +90,52 @@
             };
         });
         
-        function signIn() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const signInButton = document.getElementById("signInButton"); // Get the button
-        
-            if (!email) {
-                toastr.warning("Please enter your email!");
-                return;
+        function signIn(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const signInButton = document.getElementById("signInButton");
+
+    if (!email) {
+        toastr.warning("Please enter your email!");
+        return;
+    }
+    if (!password) {
+        toastr.warning("Please enter your password!");
+        return;
+    }
+
+    signInButton.disabled = true;
+    signInButton.innerHTML = "Signing in...";
+
+    axios.post('/api/v1/auth/login', { email, password })
+        .then(response => {
+            if (response.data.message) {
+                toastr.success(response.data.message);
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                toastr.error("Unexpected response from server.");
+                signInButton.disabled = false;
+                signInButton.innerHTML = "Sign In";
             }
-            if (!password) {
-                toastr.warning("Please enter your password!");
-                return;
+        })
+        .catch(error => {
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+            if (error.response) {
+                errorMessage = error.response.data.detail || 'Invalid credentials.';
+            } else if (error.request) {
+                errorMessage = 'No response from server. Check your network connection.';
             }
-        
-            // Disable button & show loading state
-            signInButton.disabled = true;
-            signInButton.innerHTML = "Signing in...";
-        
-            axios.post('/api/v1/auth/login', { email, password })
-                .then(response => {
-                    if (response.data.message) {
-                        toastr.success(response.data.message);
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 1500);
-                    } else {
-                        toastr.error("Unexpected response from server.");
-                        signInButton.disabled = false; // Re-enable on failure
-                        signInButton.innerHTML = "Sign In";
-                    }
-                })
-                .catch(error => {
-                    let errorMessage = 'An unexpected error occurred. Please try again.';
-        
-                    if (error.response) {
-                        errorMessage = error.response.data.detail || 'Invalid credentials.';
-                    } else if (error.request) {
-                        errorMessage = 'No response from server. Check your network connection.';
-                    }
-                    
-        
-                    toastr.error(errorMessage);
-                    signInButton.disabled = false; // Re-enable on failure
-                    signInButton.innerHTML = "Sign In";
-                });
-        }
+
+            toastr.error(errorMessage);
+            signInButton.disabled = false;
+            signInButton.innerHTML = "Sign In";
+        });
+}
+
         
     </script>
 
