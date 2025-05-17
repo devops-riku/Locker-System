@@ -124,7 +124,7 @@ const grid = new gridjs.Grid({
     columns: [
         "Name",
         "Email",
-        "ID Number",
+        "RFID Serial Number",
         "Locker",
         {
             name: 'Actions',
@@ -151,7 +151,7 @@ const grid = new gridjs.Grid({
         then: data => data.results.map(user => [
             `${user.Name}`,
             user.email,
-            user.id_number,
+            user.credentials[0]?.rfid_serial_number || 'Not Set',
             user.credentials[0]?.locker?.name || 'Not Assigned',
             user.id // This is used for the actions, it's not displayed
         ]),
