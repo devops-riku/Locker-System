@@ -37,7 +37,7 @@ async def is_super_admin(request: Request) -> bool:
     return True
 
 
-def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number=None, created_by=None, is_super_admin=False):
+def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False):
     try:
 
         get_locker_by_id = db_session.query(Locker).filter_by(id=locker_number).first()
@@ -48,7 +48,7 @@ def CreateUser(first_name=None, last_name=None, id_number=None, address=None, em
         if not is_super_admin:
             payload = {
             "user_id": user.id,
-            "pin": f"{pin_number}",
+            "pin": str(pin_number),
             "rfid": f"{rfid_serial_number}",
             "relay_pin": get_locker_by_id.relay_pin,
             "is_active": True

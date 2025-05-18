@@ -3,6 +3,7 @@ from sqlalchemy import URL, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from urllib.parse import quote_plus
 
 load_dotenv()
 
@@ -13,7 +14,7 @@ HOST = os.getenv("DBHOST")
 PORT = os.getenv("DBPORT")
 DBNAME = os.getenv("DBNAME")
 
-DATABASE_URL = f"postgresql+psycopg2://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}"
+DATABASE_URL = f"postgresql+psycopg2://{USERNAME}:{quote_plus(PASSWORD)}@{HOST}:{PORT}/{DBNAME}"
 # DATABASE_URL = URL.create(
 #                 drivername=DRIVERNAME,
 #                 username=USERNAME,

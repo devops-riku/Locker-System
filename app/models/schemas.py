@@ -22,7 +22,7 @@ class CreateUserRequest(BaseModel):
     password: str = Field(...)
     locker_number: int = Field(...)
     rfid_serial_number: str = Field(...)
-    pin_number: int = Field(..., ge=0000, le=9999)
+    pin_number: str = Field(..., max_length=4)
 
 
 class AddLockerRequest(BaseModel):
