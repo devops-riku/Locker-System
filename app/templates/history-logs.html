@@ -18,6 +18,20 @@
                 <i class="fas fa-print"></i> Print
             </button>
         </div>
+        <!-- Date Range Filter -->
+        <div class="mb-3 d-flex align-items-center pt-4 ">
+
+        <label for="start-date" class="form-label me-2 mb-0" style="color: white;">From:</label>
+        <input type="date" id="start-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
+
+        <label for="end-date" class="form-label me-2 mb-0" style="color: white;">To:</label>
+        <input type="date" id="end-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
+
+        <button id="filter-date-btn" class="btn btn-primary btn-sm me-2">Filter</button>
+        <button id="clear-date-btn" class="btn btn-secondary btn-sm">Clear</button>
+
+        </div>
+
         <!-- Placeholder for Grid.js Table -->
         <div id="grid-table"></div>
     </div>
@@ -29,44 +43,90 @@
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
 <script>
+    let allHistoryData = [];
+    let grid;
+
+    function renderGrid(filteredData) {
+        // Destroy previous grid if exists
+        if (grid) {
+            grid.destroy();
+        }
+        grid = new gridjs.Grid({
+            columns: ["Author", "Action", "Timestamp"],
+            data: filteredData.map(record => [
+                record.author,
+                record.action,
+                record.datetime
+            ]),
+            sort: true,
+            pagination: { limit: 7 },
+            search: true,
+            resizable: true,
+            style: {
+                table: {
+                    'border-collapse': 'collapse',
+                    'width': '100%'
+                },
+                th: {
+                    'background-color': '#252525',
+                    'color': '#e0e0e0',
+                    'border-bottom': '2px solid #333',
+                    'text-align': 'left'
+                },
+                td: {
+                    'background-color': '#1e1e1e',
+                    'color': '#e0e0e0',
+                    'border-bottom': '1px solid #333',
+                    'padding': '8px'
+                }
+            }
+        }).render(document.getElementById("grid-table"));
+    }
+    // Function to filter data by date range
+    function filterByDate() {
+    const startDate = document.getElementById("start-date").value;
+    const endDate = document.getElementById("end-date").value;
+    let filtered = allHistoryData;
+
+    filtered = filtered.filter(record => {
+        // Get only the date part as 'YYYY-MM-DD'
+        const recordDateStr = record.datetime.substring(0, 10);
+        // Convert to Date objects
+        const recordDate = new Date(recordDateStr);
+        let afterStart = true, beforeEnd = true;
+
+        if (startDate) {
+            afterStart = recordDate >= new Date(startDate);
+        }
+        if (endDate) {
+            // To include the end date, set time to end of the day
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            beforeEnd = recordDate <= end;
+        }
+        return afterStart && beforeEnd;
+    });
+
+    renderGrid(filtered);
+}
+// ...existing code...
+
     document.addEventListener("DOMContentLoaded", function () {
         fetch("/admin/get_history")
-            .then(response => response.json())
+            .then(response => response.json())      
             .then(data => {
-                const formattedData = data.history.map(record => [
-                    record.author,
-                    record.action,
-                    record.datetime
-                ]);
+                allHistoryData = data.history;
+                renderGrid(allHistoryData);
 
-                const grid = new gridjs.Grid({
-                    columns: ["Author", "Action", "Timestamp"],
-                    data: formattedData,
-                    sort: true,
-                    pagination: { limit: 7 },
-                    search: true,
-                    resizable: true,
-                    style: {
-                        table: {
-                            'border-collapse': 'collapse',
-                            'width': '100%'
-                        },
-                        th: {
-                            'background-color': '#252525',
-                            'color': '#e0e0e0',
-                            'border-bottom': '2px solid #333',
-                            'text-align': 'left'
-                        },
-                        td: {
-                            'background-color': '#1e1e1e',
-                            'color': '#e0e0e0',
-                            'border-bottom': '1px solid #333',
-                            'padding': '8px'
-                        }
-                    }
-                }).render(document.getElementById("grid-table"));
+                // Date filter event
+                document.getElementById("filter-date-btn").addEventListener("click", filterByDate);
+                document.getElementById("clear-date-btn").addEventListener("click", function() {
+                    document.getElementById("start-date").value = '';
+                    document.getElementById("end-date").value = '';
+                    renderGrid(allHistoryData);
+                });
 
-                // Add print functionality
+                // Print functionality (unchanged)
                 document.getElementById("print-button").addEventListener("click", () => {
                     let tableHtml = `
                         <table>
@@ -79,8 +139,22 @@
                             </thead>
                             <tbody>
                     `;
-
-                    data.history.forEach(record => {
+                    // Use currently filtered data for printing
+                    const startDate = document.getElementById("start-date").value;
+                    const endDate = document.getElementById("end-date").value;
+                    let filtered = allHistoryData;
+                    filtered = filtered.filter(record => {
+                        const recordDateStr = record.datetime.substring(0, 10);
+                        let afterStart = true, beforeEnd = true;
+                        if (startDate) {
+                            afterStart = recordDateStr >= startDate;
+                        }
+                        if (endDate) {
+                            beforeEnd = recordDateStr <= endDate;
+                        }
+                        return afterStart && beforeEnd;
+                    });
+                    filtered.forEach(record => {
                         tableHtml += `
                             <tr>
                                 <td>${record.author}</td>
