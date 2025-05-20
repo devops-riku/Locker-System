@@ -15,16 +15,7 @@ PORT = os.getenv("DBPORT")
 DBNAME = os.getenv("DBNAME")
 
 DATABASE_URL = f"postgresql+psycopg2://{USERNAME}:{quote_plus(PASSWORD)}@{HOST}:{PORT}/{DBNAME}"
-# DATABASE_URL = URL.create(
-#                 drivername=DRIVERNAME,
-#                 username=USERNAME,
-#                 password=PASSWORD,
-#                 host=HOST,
-#                 database=DBNAME,
-#                 port=PORT)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 db_session = SessionLocal()
-
-
