@@ -171,7 +171,7 @@
         {% if user.created_at %}
             <div class="profile-info">
                 <div class="profile-info-label">Account Created</div>
-                <div class="profile-info-value">{{ user.created_at.strftime('%m-%d-%Y | %H:%M %p') }}</div>
+                <div class="profile-info-value">{{ user.created_at | pht}}</div>
             </div>
         {% endif %}
     </div>

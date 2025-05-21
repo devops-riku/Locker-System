@@ -89,21 +89,22 @@
     let filtered = allHistoryData;
 
     filtered = filtered.filter(record => {
-        // Get only the date part as 'YYYY-MM-DD'
         const recordDateStr = record.datetime.substring(0, 10);
-        // Convert to Date objects
         const recordDate = new Date(recordDateStr);
         let afterStart = true, beforeEnd = true;
 
         if (startDate) {
-            afterStart = recordDate >= new Date(startDate);
+            const start = new Date(startDate);
+            start.setDate(start.getDate() - 1); // subtract 1 day
+            afterStart = recordDate > start; // strictly after (start - 1)
         }
+
         if (endDate) {
-            // To include the end date, set time to end of the day
             const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            end.setHours(23, 59, 59, 999); // include full end date
             beforeEnd = recordDate <= end;
         }
+
         return afterStart && beforeEnd;
     });
 
@@ -144,7 +145,7 @@
                     const endDate = document.getElementById("end-date").value;
                     let filtered = allHistoryData;
                     filtered = filtered.filter(record => {
-                        const recordDateStr = record.datetime.substring(0, 10);
+                        const recordDateStr = record.datetime.substring(0, 10);                        
                         let afterStart = true, beforeEnd = true;
                         if (startDate) {
                             afterStart = recordDateStr >= startDate;
