@@ -6,6 +6,7 @@ from app.models import schemas
 from app.services.admin_service import get_user_by_email, serialize_user
 from app.services.auth_service import init_reset_password, send_reset_password_link
 from app.services.history_logs import log_history
+from app.services.jwt_decode import JWTDecode
 
 router = APIRouter()
 
@@ -53,9 +54,12 @@ async def reset_password(request: Request):
 
     if not access_token or not new_password:
         raise HTTPException(status_code=400, detail="Missing token or password")
-
-    try:
+    
+    email_from_token = JWTDecode(access_token)
+    try:        
         init_reset_password(access_token, new_password)
+        if get_user_by_email(email_from_token.get("email", None)):
+            log_history(user_id=get_user_by_email(email_from_token.get("email", None)).id, action="Update Email Password")
         return {"message": "Password updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
