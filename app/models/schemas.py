@@ -62,6 +62,7 @@ class HistoryLogRequest(BaseModel):
 
 
 class PinValidationRequest(BaseModel):
+    user_id: int
     pin: str
 
 

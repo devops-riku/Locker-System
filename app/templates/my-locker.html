@@ -94,6 +94,7 @@
         let $pinInput = $("#pinInput");
         let cooldownInterval = null;
         let remainingAttempts = 3;
+        let user_id = "{{request.session['user'].get('id')}}";
 
         // Function to handle cooldown
         function startCooldown(seconds) {
@@ -135,7 +136,9 @@
                 }
 
                 // Validate the pin via Axios
-                axios.post('/validate-pin', { pin: enteredPin })
+                axios.post('/validate-pin', { 
+                    user_id: user_id, 
+                    pin: enteredPin })
                 .then(response => {
                     if (response.data.cooldown) {
                         startCooldown(response.data.cooldown);
