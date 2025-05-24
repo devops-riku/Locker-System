@@ -112,7 +112,7 @@
 {% block content %}
 <div class="profile-container">
     <div class="profile-card">
-        <img src="{{request.session.get("user")["avatar"] }}" alt="Profile Picture" class="profile-img">
+        {% if request.session.get("user")["avatar"] %}<img src="{{request.session.get("user")["avatar"] }}" alt="Profile Picture" class="profile-img"> {% else %} <img src="https://i.pinimg.com/736x/a3/31/a8/a331a8d0a8ff50827c6cb3437f336a30.jpg" alt="Profile Picture" class="profile-img">{% endif %}
         <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
         <p class="profile-email">{{ user.email }}</p>
 
