@@ -295,6 +295,7 @@ async def upload_profile_photo(request: Request, profile_photo: UploadFile = Fil
 
     if not profile_photo.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image uploads are allowed")
+    
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     ext = profile_photo.filename.split('.')[-1]
     filename = f"{uuid.uuid4().hex}.{ext}"
@@ -305,18 +306,33 @@ async def upload_profile_photo(request: Request, profile_photo: UploadFile = Fil
     image_url = f"{UPLOAD_DIR}/{filename}"
 
     user = db_session.query(User).filter(User.id == get_user_session(request).get('id')).first()
-    user.avatar = image_url
-    request.session.get("user")['avatar'] = image_url
-    db_session.commit()
+
+    if user:
+        user.avatar = image_url
+
+        if request.session.get("user")['avatar']:
+            try:
+                old_avatar_path = request.session.get("user")['avatar']
+                if os.path.exists(old_avatar_path):
+                    os.remove(old_avatar_path)
+                    
+            except Exception as e:
+                print(f"Error removing old profile photo: {str(e)}")
+                
+        request.session.get("user")['avatar'] = image_url
+        db_session.commit()
+        log_history(user_id=get_user_session(request).get('id'), action="Update Profile Photo")
+    else:
+        raise HTTPException(status_code=404, detail="Invalid User")
+
     return JSONResponse(content={"message": "Photo uploaded successfully", "url": image_url})
 
 
 @router.delete("/delete-profile-photo")
 async def delete_profile_photo(request: Request):
-    session_user = request.session.get("user")
 
-    if not session_user or not session_user.get("avatar"):
-        raise HTTPException(status_code=400, detail="No profile photo found in session")
+    if not get_user_session(request) or not get_user_session(request).get("avatar"):
+        raise HTTPException(status_code=400, detail="No profile photo found.")
 
     file = request.session["user"]["avatar"] 
 
@@ -326,6 +342,8 @@ async def delete_profile_photo(request: Request):
         user = db_session.query(User).filter(User.id == get_user_session(request).get('id')).first()
         user.avatar = None
         db_session.commit()
+
+        log_history(user_id=get_user_session(request).get('id'), action="Delete Profile Photo")
 
         return JSONResponse(content={"message": "Profile photo deleted successfully"})
     else:

@@ -536,6 +536,11 @@
             document.getElementById('delete-photo-btn').disabled = false;
             
             toastr.success('Profile photo updated successfully');
+
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);                
+            
         })
         .catch(function(error) {
             console.error('Error uploading profile photo:', error);
@@ -575,6 +580,10 @@
                 deleteBtn.disabled = true;
                 
                 toastr.success('Profile photo deleted successfully');
+
+                setTimeout(function() {
+                window.location.reload();
+            }, 1000);          
             })
             .catch(function(error) {
                 console.error('Error deleting profile photo:', error);
