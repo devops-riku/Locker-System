@@ -61,6 +61,10 @@ async def sessions_middleware(request: Request, call_next):
     # Check if the user is logged in
     user_logged_in = user_is_logged_in(request)
 
+    # Allow access to /validate-pin for both logged-in and non-logged-in users
+    if request.url.path == "/validate-pin":
+        return await call_next(request)
+
     if user_logged_in and request.url.path in public_paths:
         # Redirect logged-in users away from public paths
         return RedirectResponse(url="/")  # Redirect to a default logged-in page, e.g., dashboard
