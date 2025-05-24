@@ -12,7 +12,7 @@ from app.services.admin_service import get_user_by_id, get_user_creds, get_user_
 from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
-from app.services.mqtt import mqtt_client
+from app.services.mqtt import mqtt_client, publish_attempt_sync
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -103,56 +103,67 @@ failed_attempts = {}
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
     user_id = pin_request.user_id
-    
-    # Check if user is in cooldown
+
+    # Check cooldown/lockout
     if user_id in failed_attempts:
         last_attempt = failed_attempts[user_id]
         if 'lockout_time' in last_attempt and datetime.now() < last_attempt['lockout_time']:
             remaining_time = (last_attempt['lockout_time'] - datetime.now()).seconds
-            return {
-                "valid": False,
-                "message": f"Too many attempts. Please try again in {remaining_time} seconds",
-                "cooldown": remaining_time
-            }
-    
+            publish_attempt_sync(user_id, "locked", cooldown=remaining_time)
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "valid": False,
+                    "message": f"Too many attempts. Please try again in {remaining_time} seconds",
+                    "cooldown": remaining_time
+                }
+            )
+
+    # Retrieve user data
     user_creds = get_user_creds(user_id)
-    
-    
+
     if not user_creds:
         return {"valid": False, "message": "User credentials not found"}
 
-    
     if not user_creds[0].get('is_active', False):
         return {"valid": False, "message": "Account deactivated"}
 
-    
+    # Match PIN
     if str(pin_request.pin) == str(user_creds[0]['pin_number']):
-        
         if user_id in failed_attempts:
             del failed_attempts[user_id]
+        publish_attempt_sync(user_id, "success")
         return {"valid": True}
-    else:
-       
-        if user_id not in failed_attempts:
-            failed_attempts[user_id] = {'count': 0}
-        
-        failed_attempts[user_id]['count'] += 1
-      
-        if failed_attempts[user_id]['count'] >= 3:
-            lockout_time = datetime.now() + timedelta(minutes=2)
-            failed_attempts[user_id]['lockout_time'] = lockout_time
-            return {
+
+    # Wrong PIN
+    if user_id not in failed_attempts:
+        failed_attempts[user_id] = {'count': 0}
+
+    failed_attempts[user_id]['count'] += 1
+
+    if failed_attempts[user_id]['count'] >= 3:
+        lockout_time = datetime.now() + timedelta(minutes=2)
+        failed_attempts[user_id]['lockout_time'] = lockout_time
+        publish_attempt_sync(user_id, "locked", cooldown=120)
+        raise HTTPException(
+            status_code=400,
+            detail={
                 "valid": False,
                 "message": "Too many failed attempts. Please try again in 2 minutes",
                 "cooldown": 120
             }
-        
-        remaining_attempts = 3 - failed_attempts[user_id]['count']
-        return {
+        )
+
+    remaining_attempts = 3 - failed_attempts[user_id]['count']
+    publish_attempt_sync(user_id, "failed", remaining_attempts=remaining_attempts)
+    raise HTTPException(
+        status_code=429,
+        detail={
             "valid": False,
             "message": f"Invalid PIN. {remaining_attempts} attempts remaining",
             "remaining_attempts": remaining_attempts
         }
+    )
     
 
 # ------- Update user profile -------

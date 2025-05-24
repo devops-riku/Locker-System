@@ -18,6 +18,25 @@ mqtt_client = mqtt.Client()
 mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 mqtt_client.tls_set()
 
+def publish_attempt_sync(user_id: str, status: str, remaining_attempts: int = 0, cooldown: int = 0):
+    """
+    Publishes attempt sync status to ESP32 devices.
+    `status` can be: 'success', 'failed', or 'locked'
+    """
+    payload = {
+        "type": "sync_attempts",
+        "user_id": user_id,
+        "status": status,
+        "remaining_attempts": remaining_attempts,
+        "cooldown": cooldown
+    }
+
+    try:
+        mqtt_client.publish("locker/sync", json.dumps(payload))
+        print(f"📡 Published sync: {payload}")
+    except Exception as e:
+        print(f"❌ Failed to publish sync for {user_id}: {e}")
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("✅ MQTT connected to HiveMQ.")
@@ -55,6 +74,7 @@ def reconnect_mqtt():
         except Exception as e:
             print("❌ Reconnect failed:", e)
             time.sleep(5)
+
 
 def mqtt_setup():
     mqtt_client.on_connect = on_connect
