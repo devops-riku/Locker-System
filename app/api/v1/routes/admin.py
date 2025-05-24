@@ -281,7 +281,7 @@ async def get_history(request: Request):
     # Serialize the history records
     history_list = [
         {
-            "author": f"{record.user.first_name} {record.user.last_name}" if record.user else "Unknown",
+            "author": f"{record.user.first_name or ''} {record.user.last_name or ''}".strip() if record.user else "Unknown",
             "action": record.action,
             "datetime": utc_to_ph(str(record.date_created))  # Convert to UTC+8:00
         }
