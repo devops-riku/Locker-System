@@ -15,7 +15,7 @@
         background-color: #2a2424;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        margin-top: 20px;
+        margin-top: 10px;
         color: #eee;
     }
 
@@ -23,7 +23,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px 20px;
+        padding: 10px 15px;
         border-bottom: 1px solid #3a3a3a;
     }
 
@@ -34,12 +34,18 @@
     }
 
     .tab-content {
-        padding: 20px;
+        padding: 15px;
     }
 
     .form-label {
         font-weight: 600;
         color: #ccc;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 0.5rem !important;
     }
 
     .form-control {
@@ -47,7 +53,9 @@
         color: #eee;
         border: 1px solid #444;
         border-radius: 4px;
-        padding: 8px;
+        padding: 6px;
+        height: calc(1.5em + 0.75rem + 2px);
+        font-size: 0.875rem;
     }
 
     .form-control:focus {
@@ -77,18 +85,33 @@
         background-color: #ff4081;
         border-color: #ff4081;
         color: white;
-        padding: 8px 20px;
+        padding: 6px 12px;
+        font-size: 0.875rem;
     }
 
     .btn-primary:hover {
         background-color: #e91e63;
         border-color: #e91e63;
     }
+    
+    .btn-danger {
+        background-color: #f44336;
+        border-color: #f44336;
+        color: white;
+        padding: 6px 12px;
+        font-size: 0.875rem;
+    }
+    
+    .btn-danger:hover {
+        background-color: #d32f2f;
+        border-color: #d32f2f;
+    }
 
     .form-actions {
         display: flex;
         justify-content: flex-end;
-        margin-top: 1.5rem;
+        margin-top: 0.75rem;
+        gap: 8px;
     }
 
     .nav-tabs .nav-link {
@@ -110,6 +133,45 @@
 
     .modal-header, .modal-footer {
         border-color: #444444;
+    }
+    
+    .profile-photo-container {
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .profile-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+        border: 3px solid #ff4081;
+    }
+    
+    .profile-photo-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: #3a3535;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: #666;
+        margin-bottom: 10px;
+        border: 3px solid #444;
+    }
+    
+    .photo-actions {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    
+    #photo-upload {
+        display: none;
     }
 </style>
 {% endblock %}
@@ -135,54 +197,94 @@
             <div class="tab-content" id="settingsTabContent">
                 <!-- Profile Tab -->
                 <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-                    <h4 class="mb-4">Profile Information</h4>
-                    <form id="profileForm">
-                        <div class="mb-3">
-                            <label for="first_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <!-- Profile Photo Section -->
+                            <div class="profile-photo-container">
+                                {% if request.session.get("user")["avatar"]  %}
+                                <img src="{{ request.session.get("user")["avatar"]  }}" alt="Profile Photo" class="profile-photo">
+                                {% else %}
+                                <div class="profile-photo-placeholder">
+                                    {% if request.session['user']['avatar'] %}<img src="{{request.session.get("user")["avatar"] }}" >{% else %}<i class="fas fa-user"></i>{% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="photo-actions">
+                                    <input type="file" id="photo-upload" accept="image/*">
+                                    <button type="button" class="btn btn-primary btn-sm" id="choose-photo-btn">
+                                        <i class="fas fa-camera"></i> Photo
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="delete-photo-btn"
+                                        {% if not request.session.get("user")["avatar"] %}disabled{% endif %}>
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>                                                                            
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="last_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        <div class="col-md-8">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}" maxlength="100" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_number" class="form-label">ID Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="id_number" name="id_number" value="{{ user.id_number }}" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_number" class="form-label">ID Number</label>
-                            <input type="text" class="form-control" id="id_number" name="id_number" value="{{ user.id_number }}" required>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
 
                 <!-- Password Tab -->
                 <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-                    <h4 class="mb-4">Change Password</h4>
                     <form id="passwordForm">
-                        <div class="mb-3">
-                            <label for="new_password" class="form-label">New Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                <button class="btn" type="button" onclick="togglePassword('new_password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                        <button class="btn" type="button" onclick="togglePassword('new_password')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm New Password</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                <button class="btn" type="button" onclick="togglePassword('confirm_password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                        <button class="btn" type="button" onclick="togglePassword('confirm_password')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -193,33 +295,40 @@
 
                 <!-- PIN Tab -->
                 <div class="tab-pane fade" id="pin" role="tabpanel" aria-labelledby="pin-tab">
-                    <h4 class="mb-4">Change PIN</h4>
                     <form id="pinForm">
-                        <div class="mb-3">
-                            <label for="current_pin" class="form-label">Current PIN</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="current_pin" name="current_pin" required maxlength="4" pattern="\d{4}">
-                                <button class="btn" type="button" onclick="togglePassword('current_pin')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="current_pin" class="form-label">Current PIN</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="current_pin" name="current_pin" required maxlength="4" pattern="\d{4}">
+                                        <button class="btn" type="button" onclick="togglePassword('current_pin')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new_pin" class="form-label">New PIN</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="new_pin" name="new_pin" required maxlength="4" pattern="\d{4}">
-                                <button class="btn" type="button" onclick="togglePassword('new_pin')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="new_pin" class="form-label">New PIN</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_pin" name="new_pin" required maxlength="4" pattern="\d{4}">
+                                        <button class="btn" type="button" onclick="togglePassword('new_pin')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirm_pin" class="form-label">Confirm New PIN</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="confirm_pin" name="confirm_pin" required maxlength="4" pattern="\d{4}">
-                                <button class="btn" type="button" onclick="togglePassword('confirm_pin')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="confirm_pin" class="form-label">Confirm New PIN</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_pin" name="confirm_pin" required maxlength="4" pattern="\d{4}">
+                                        <button class="btn" type="button" onclick="togglePassword('confirm_pin')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -231,12 +340,34 @@
         </div>
     </div>
 </div>
+
+<!-- Photo Crop Modal -->
+<div class="modal fade" id="photoCropModal" tabindex="-1" aria-labelledby="photoCropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoCropModalLabel">Crop Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="crop-container" style="max-width: 100%; height: 300px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-crop-btn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block script %}
 <!-- Add jQuery and Toastr JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<!-- Add Cropper.js for image cropping -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
     // Configure Toastr
     toastr.options = {
@@ -256,6 +387,10 @@
         "showMethod": "fadeIn",
         "hideMethod": "fadeOut"
     };
+
+    // Variables for image cropping
+    let cropper;
+    let imageElement;
 
     function togglePassword(inputId) {
         const input = document.getElementById(inputId);
@@ -282,6 +417,182 @@
             button.disabled = false;
         }
     }
+
+    // Profile photo handling
+    document.getElementById('choose-photo-btn').addEventListener('click', function() {
+        document.getElementById('photo-upload').click();
+    });
+
+    document.getElementById('photo-upload').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Initialize cropper
+                const cropContainer = document.getElementById('crop-container');
+                cropContainer.innerHTML = '';
+                
+                imageElement = document.createElement('img');
+                imageElement.src = e.target.result;
+                imageElement.style.maxWidth = '100%';
+                cropContainer.appendChild(imageElement);
+                
+                // Show modal
+                const cropModal = new bootstrap.Modal(document.getElementById('photoCropModal'));
+                cropModal.show();
+                
+                // Initialize cropper after modal is shown
+                document.getElementById('photoCropModal').addEventListener('shown.bs.modal', function() {
+                    cropper = new Cropper(imageElement, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false
+                    });
+                }, { once: true });
+            };
+            
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Save cropped image
+    document.getElementById('save-crop-btn').addEventListener('click', function() {
+        if (!cropper) return;
+        
+        const canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300,
+            minWidth: 150,
+            minHeight: 150,
+            maxWidth: 500,
+            maxHeight: 500,
+            fillColor: '#fff'
+        });
+        
+        if (!canvas) return;
+        
+        const croppedImageDataURL = canvas.toDataURL('image/jpeg');
+        
+        // Upload the cropped image to the server
+        uploadProfilePhoto(croppedImageDataURL);
+        
+        // Hide the modal
+        const cropModal = bootstrap.Modal.getInstance(document.getElementById('photoCropModal'));
+        cropModal.hide();
+    });
+
+    function uploadProfilePhoto(dataURL) {
+        // Convert base64 to blob for upload
+        const byteString = atob(dataURL.split(',')[1]);
+        const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([ab], { type: mimeString });
+        const formData = new FormData();
+        formData.append('profile_photo', blob, 'profile.jpg');
+        
+        // Show loading state
+        const choosePhotoBtn = document.getElementById('choose-photo-btn');
+        choosePhotoBtn.setAttribute('data-original-text', choosePhotoBtn.innerHTML);
+        setLoading(choosePhotoBtn, true);
+        
+        // Send to server
+        axios.post('/upload-profile-photo', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(function(response) {
+            // Update the profile photo display
+            const photoContainer = document.querySelector('.profile-photo-container');
+            
+            if (photoContainer.querySelector('.profile-photo')) {
+                // Update existing photo
+                photoContainer.querySelector('.profile-photo').src = dataURL;
+            } else {
+                // Replace placeholder with photo
+                photoContainer.querySelector('.profile-photo-placeholder').remove();
+                const img = document.createElement('img');
+                img.src = dataURL;
+                img.alt = 'Profile Photo';
+                img.className = 'profile-photo';
+                photoContainer.insertBefore(img, photoContainer.firstChild);
+            }
+            
+            // Enable delete button
+            document.getElementById('delete-photo-btn').disabled = false;
+            
+            toastr.success('Profile photo updated successfully');
+
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);                
+            
+        })
+        .catch(function(error) {
+            console.error('Error uploading profile photo:', error);
+            toastr.error('Error uploading profile photo: ' + (error.response?.data?.detail || 'Unknown error'));
+        })
+        .finally(function() {
+            setLoading(choosePhotoBtn, false);
+        });
+    }
+
+    // Delete profile photo
+    document.getElementById('delete-photo-btn').addEventListener('click', function() {
+        if (this.disabled) return;
+        
+        const deleteBtn = this;
+        deleteBtn.setAttribute('data-original-text', deleteBtn.innerHTML);
+        setLoading(deleteBtn, true);
+        
+        axios.delete('/delete-profile-photo')
+            .then(function(response) {
+                // Replace photo with placeholder
+                const photoContainer = document.querySelector('.profile-photo-container');
+                
+                if (photoContainer.querySelector('.profile-photo')) {
+                    photoContainer.querySelector('.profile-photo').remove();
+                    
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'profile-photo-placeholder';
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-user';
+                    placeholder.appendChild(icon);
+                    
+                    photoContainer.insertBefore(placeholder, photoContainer.firstChild);
+                }
+                
+                // Disable delete button
+                deleteBtn.disabled = true;
+                
+                toastr.success('Profile photo deleted successfully');
+
+                setTimeout(function() {
+                window.location.reload();
+            }, 1000);          
+            })
+            .catch(function(error) {
+                console.error('Error deleting profile photo:', error);
+                toastr.error('Error deleting profile photo: ' + (error.response?.data?.detail || 'Unknown error'));
+            })
+            .finally(function() {
+                setLoading(deleteBtn, false);
+            });
+    });
 
     document.getElementById('profileForm').addEventListener('submit', function(e) {
         e.preventDefault();

@@ -30,49 +30,62 @@
         </div>
         <div class="modal-body scrollable-modal-body">
           <div class="mb-3">
-            <label for="first_name" class="form-label">First Name*</label>
+            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="first_name" required>
           </div>
+
           <div class="mb-3">
-            <label for="last_name" class="form-label">Last Name*</label>
+            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="last_name" required>
           </div>
+
           <div class="mb-3">
-            <label for="id_number" class="form-label">ID Number*</label>
+            <label for="id_number" class="form-label">ID Number <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="id_number" required>
           </div>
+
           <div class="mb-3">
-            <label for="address" class="form-label">Address*</label>
-            <input type="text" class="form-control" id="address" required>
+            <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="address" maxlength="100" required>
           </div>
+
           <div class="mb-3">
-            <label for="email" class="form-label">Email*</label>
+            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
             <input type="email" class="form-control" id="email" required>
           </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Password*</label>
-            <div class="input-group">
-              <input type="password" class="form-control" id="password" required>
-              <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-            <div class="progress mt-2" style="height: 5px;">
-              <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
+
+         <div class="mb-3">
+          <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" required>
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </button>
           </div>
+          <div class="form-text text-muted">
+            Must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, and one number.
+          </div>
+          <div class="progress mt-2" style="height: 5px;">
+            <div id="passwordStrength" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+
+
           <hr>
           <h5>Locker Settings</h5>
+
           <div class="mb-3">
-            <label for="locker_number" class="form-label">Locker*</label>
+            <label for="locker_number" class="form-label">Locker <span class  ="text-danger">*</span></label>
             <select class="form-select" id="locker_number" required></select>
           </div>
+
           <div class="mb-3">
-            <label for="rfid_serial_number" class="form-label">RFID Serial*</label>
+            <label for="rfid_serial_number" class="form-label">RFID Serial <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="rfid_serial_number" required>
           </div>
+
           <div class="mb-3">
-            <label for="pin_number" class="form-label">PIN*</label>
+            <label for="pin_number" class="form-label">PIN <span class="text-danger">*</span></label>
             <div class="input-group">
               <input type="password" class="form-control" id="pin_number" maxlength="4" required>
               <button class="btn btn-outline-secondary" type="button" id="togglePin">
@@ -82,6 +95,7 @@
             <small class="text-muted">4-digit numeric PIN</small>
           </div>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveUser">Save User</button>
@@ -132,7 +146,7 @@
           </div>
           <div class="mb-3">
             <label for="editAddress" class="form-label">Address</label>
-            <input type="text" class="form-control" id="editAddress" required>
+            <input type="text" class="form-control" id="editAddress" maxlength="100" required>
           </div>
           <div class="mb-3">
               <label for="editEmail" class="form-label">Email</label>
@@ -195,4 +209,93 @@
 <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="/app/static/js/users.js"></script>
+
+<script>
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const icon = togglePassword.querySelector('i');
+
+  togglePassword.addEventListener('click', function () {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+
+    // Toggle icon class
+    icon.classList.toggle('fa-eye');
+    icon.classList.toggle('fa-eye-slash');
+  });
+</script>
+
+
+
+<script>
+  
+  document.addEventListener('DOMContentLoaded', () => {
+  const passwordInput = document.getElementById('password');
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const passwordStrengthBar = document.getElementById('passwordStrength');
+  const saveUserBtn = document.getElementById('saveUser');
+
+  // Password validation regex patterns
+  const lowercaseRegex = /[a-z]/;
+  const uppercaseRegex = /[A-Z]/;
+  const numberRegex = /[0-9]/;
+
+  // Toggle password visibility
+  togglePasswordBtn.addEventListener('click', () => {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    togglePasswordBtn.innerHTML = type === 'password' 
+      ? '<i class="fas fa-eye"></i>' 
+      : '<i class="fas fa-eye-slash"></i>';
+  });
+
+  // Validate password and update progress bar & button state
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+
+    // Check length
+    const isLengthValid = val.length >= 8;
+    // Check lowercase, uppercase, number presence
+    const hasLower = lowercaseRegex.test(val);
+    const hasUpper = uppercaseRegex.test(val);
+    const hasNumber = numberRegex.test(val);
+
+    let score = 0;
+    if (isLengthValid) score += 25;
+    if (hasLower) score += 25;
+    if (hasUpper) score += 25;
+    if (hasNumber) score += 25;
+
+    passwordStrengthBar.style.width = score + '%';
+
+    // Change color based on score
+    if (score === 100) {
+      passwordStrengthBar.className = 'progress-bar bg-success';
+      saveUserBtn.disabled = false;
+    } else if (score >= 50) {
+      passwordStrengthBar.className = 'progress-bar bg-warning';
+      saveUserBtn.disabled = true;
+    } else {
+      passwordStrengthBar.className = 'progress-bar bg-danger';
+      saveUserBtn.disabled = true;
+    }
+  });
+
+  // Disable save button initially
+  saveUserBtn.disabled = true;
+
+  // Optional: Validate on form submit as well
+  const addUserForm = document.getElementById('addUserForm');
+  addUserForm.addEventListener('submit', (e) => {
+    const val = passwordInput.value;
+    const isValid = val.length >= 8 && lowercaseRegex.test(val) && uppercaseRegex.test(val) && numberRegex.test(val);
+    if (!isValid) {
+      e.preventDefault();
+      alert('Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, and one number.');
+      passwordInput.focus();
+    }
+  });
+});
+
+</script>
 {% endblock %}

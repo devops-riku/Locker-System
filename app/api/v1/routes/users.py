@@ -1,7 +1,10 @@
 import json
+import shutil
 import traceback
+from uuid import uuid4
+import uuid
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from app.core.config import get_supabase_client, templates
 from app.models.schemas import *
@@ -11,6 +14,9 @@ from app.models.database import *
 from app.models.models import *
 from app.services.mqtt import mqtt_client
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+
 
 load_dotenv()
 
@@ -21,6 +27,10 @@ router = APIRouter()
 async def show_super_admin_form(request: Request):
     return templates.TemplateResponse("superadmin.html", {"request": request})
 
+@router.get('/sign-up', response_class=HTMLResponse)
+async def sign_up_page(request: Request):
+    """Render the sign-up page."""
+    return templates.TemplateResponse('sign-up.html', {'request': request})
 
 @router.get('/login', response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -80,9 +90,6 @@ async def logout(request: Request):
     return RedirectResponse(url="/login")
 
 
-
-
-
 @router.get("/s")
 def search_page(request: Request):
     return request.session
@@ -95,7 +102,7 @@ def c_(request: Request):
 failed_attempts = {} 
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
-    user_id = get_user_session(request).get('id')
+    user_id = pin_request.user_id
     
     # Check if user is in cooldown
     if user_id in failed_attempts:
@@ -191,7 +198,6 @@ async def update_profile(request: Request, profile_data: ProfileUpdate):
         return JSONResponse(content={"message": "No changes detected"}, status_code=200)
     
 
-
 @router.patch("/update-password")
 async def update_password(request: Request, password_data: PasswordUpdate):
     user_id = get_user_session(request).get('id')
@@ -278,3 +284,66 @@ async def update_pin(request: Request, pin_data: PinUpdate):
         print(f"Error updating PIN: {str(e)}")
         traceback.print_exc()
         return JSONResponse(content={"message": f"Error updating PIN: {str(e)}"}, status_code=500)
+    
+
+#------- Update user PFP -------
+
+@router.post("/upload-profile-photo")
+async def upload_profile_photo(request: Request, profile_photo: UploadFile = File(...)):
+    UPLOAD_DIR = "app/static/uploads/profile_photos"
+
+    if not profile_photo.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image uploads are allowed")
+    
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = profile_photo.filename.split('.')[-1]
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(profile_photo.file, buffer)
+    image_url = f"{UPLOAD_DIR}/{filename}"
+
+    user = db_session.query(User).filter(User.id == get_user_session(request).get('id')).first()
+
+    if user:
+        user.avatar = image_url
+
+        if request.session.get("user")['avatar']:
+            try:
+                old_avatar_path = request.session.get("user")['avatar']
+                if os.path.exists(old_avatar_path):
+                    os.remove(old_avatar_path)
+
+            except Exception as e:
+                print(f"Error removing old profile photo: {str(e)}")
+                
+        request.session.get("user")['avatar'] = image_url
+        db_session.commit()
+        log_history(user_id=get_user_session(request).get('id'), action="Update Profile Photo")
+    else:
+        raise HTTPException(status_code=404, detail="Invalid User")
+
+    return JSONResponse(content={"message": "Photo uploaded successfully", "url": image_url})
+
+
+@router.delete("/delete-profile-photo")
+async def delete_profile_photo(request: Request):
+
+    if not get_user_session(request) or not get_user_session(request).get("avatar"):
+        raise HTTPException(status_code=400, detail="No profile photo found.")
+
+    file = request.session["user"]["avatar"] 
+
+    if os.path.exists(file):
+        os.remove(file)
+        request.session["user"]["avatar"] = None 
+        user = db_session.query(User).filter(User.id == get_user_session(request).get('id')).first()
+        user.avatar = None
+        db_session.commit()
+
+        log_history(user_id=get_user_session(request).get('id'), action="Delete Profile Photo")
+
+        return JSONResponse(content={"message": "Profile photo deleted successfully"})
+    else:
+        raise HTTPException(status_code=404, detail="File not found")

@@ -3,9 +3,11 @@ from sqlalchemy.orm import relationship
 from app.models.database import Base, engine
 from datetime import datetime, timezone
 
+
 class User(Base):
     __tablename__ = "users" 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    avatar = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     id_number = Column(String, unique=True, nullable=True)
@@ -21,12 +23,11 @@ class User(Base):
 
 class UserCredential(Base): 
     __tablename__ = "user_credentials" 
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     locker_id = Column(Integer, ForeignKey("lockers.id", ondelete="SET NULL"), nullable=True)
     rfid_serial_number = Column(String, nullable=False)
-    pin_number = Column(Integer, nullable=False)
+    pin_number = Column(String, nullable=False)
     is_current_holder = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

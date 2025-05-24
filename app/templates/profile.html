@@ -112,7 +112,7 @@
 {% block content %}
 <div class="profile-container">
     <div class="profile-card">
-        <img src="https://i.pinimg.com/736x/a3/31/a8/a331a8d0a8ff50827c6cb3437f336a30.jpg" alt="Profile Picture" class="profile-img">
+        {% if request.session.get("user")["avatar"] %}<img src="{{request.session.get("user")["avatar"] }}" alt="Profile Picture" class="profile-img"> {% else %} <img src="https://i.pinimg.com/736x/a3/31/a8/a331a8d0a8ff50827c6cb3437f336a30.jpg" alt="Profile Picture" class="profile-img">{% endif %}
         <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
         <p class="profile-email">{{ user.email }}</p>
 
@@ -142,7 +142,7 @@
         </div>
 
         {% if user.credentials %}
-            <div class="profile-info">
+            <!-- <div class="profile-info">
                 <div class="profile-info-label">RFID Serial Number</div>
                 <div class="profile-info-value">
                     {% for credential in user.credentials %}
@@ -150,7 +150,7 @@
                     {% endfor %}
                     {{ rfid_number }}
                 </div>
-            </div>
+            </div> -->
             <!-- <div class="profile-info">
                 <div class="profile-info-label">Pin Number</div>
                 <div class="profile-info-value" id="pin-mask">
@@ -171,7 +171,7 @@
         {% if user.created_at %}
             <div class="profile-info">
                 <div class="profile-info-label">Account Created</div>
-                <div class="profile-info-value">{{ user.created_at.strftime('%m-%d-%Y | %H:%M %p') }}</div>
+                <div class="profile-info-value">{{ user.created_at | pht}}</div>
             </div>
         {% endif %}
     </div>

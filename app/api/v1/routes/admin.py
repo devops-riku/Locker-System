@@ -111,7 +111,7 @@ async def get_user(user_id: int):
                     "id": cred.locker.id if cred.locker else None,
                     "name": cred.locker.name if cred.locker else None
                 },
-                "pin_number": cred.pin_number,
+                "pin_number": str(cred.pin_number),
                 "rfid_serial_number": cred.rfid_serial_number,
                 "is_active": cred.is_active  # Add is_active status
             }

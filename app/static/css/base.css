@@ -257,3 +257,9 @@ hr {
     border-style: inset;
     border-width: 1px;
 }     
+
+.user-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #ffffff;
+}
