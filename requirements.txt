@@ -67,7 +67,6 @@ typing_extensions==4.8.0
 ujson==5.8.0
 urllib3==2.2.3
 uvicorn==0.24.0.post1
-vboxapi==1.0
 watchfiles==0.21.0
 WebOb==1.8.7
 websockets==12.0
