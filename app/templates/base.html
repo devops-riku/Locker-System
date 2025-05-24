@@ -33,7 +33,7 @@
             <div class="logo-container mb-3">
                 {% if request.session['user']['avatar'] %}<img src="{{request.session.get("user")["avatar"] }}" alt="Logo" class="logo">{% else %}<img src="https://i.pinimg.com/736x/a3/31/a8/a331a8d0a8ff50827c6cb3437f336a30.jpg" alt="Logo" class="logo">{% endif %}
                 <div class="user-name mt-2">
-                    {{ request.session['user']['first_name'] + " " + request.session['user']['last_name'] }}
+                    {% if request.session['user']['first_name'] %}{{ request.session['user']['first_name'] }} {% elif request.session['user']['last_name'] %} {{request.session['user']['last_name']}} {% endif %}
                     <p style="font-weight:normal; font-size: small;">{{ request.session['user']['email'] }}</p>
                 </div>
             </div>

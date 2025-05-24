@@ -41,7 +41,7 @@ async def sessions_middleware(request: Request, call_next):
     public_paths = [
         "/sign-up", "/login", "/api/v1/auth/login", "/reset-email-password", "/new-password",
         "/api/v1/auth/request-password-reset", "/api/v1/auth/reset-password",
-        "/register-super-admin", "/admin/register-super-admin"
+        "/register-super-admin", "/admin/register-super-admin", "/validate-pin"
     ]
 
     # Bypass middleware for static files

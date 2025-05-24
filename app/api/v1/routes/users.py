@@ -102,7 +102,7 @@ def c_(request: Request):
 failed_attempts = {} 
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
-    user_id = get_user_session(request).get('id')
+    user_id = pin_request.user_id
     
     # Check if user is in cooldown
     if user_id in failed_attempts:
@@ -197,7 +197,6 @@ async def update_profile(request: Request, profile_data: ProfileUpdate):
     else:
         return JSONResponse(content={"message": "No changes detected"}, status_code=200)
     
-
 
 @router.patch("/update-password")
 async def update_password(request: Request, password_data: PasswordUpdate):
@@ -315,7 +314,7 @@ async def upload_profile_photo(request: Request, profile_photo: UploadFile = Fil
                 old_avatar_path = request.session.get("user")['avatar']
                 if os.path.exists(old_avatar_path):
                     os.remove(old_avatar_path)
-                    
+
             except Exception as e:
                 print(f"Error removing old profile photo: {str(e)}")
                 
