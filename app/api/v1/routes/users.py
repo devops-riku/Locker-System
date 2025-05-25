@@ -126,60 +126,89 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
     # Check cooldown
     if user_cred and user_cred.attempt_duration and datetime.now() < user_cred.attempt_duration:
         remaining_time = (user_cred.attempt_duration - datetime.now()).seconds
-        return {
-            "valid": False,
-            "message": f"Too many attempts. Please try again in {remaining_time} seconds",
-            "cooldown": remaining_time
-        }
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "valid": False,
+                "message": f"Too many attempts. Please try again in {remaining_time} seconds",
+                "cooldown": remaining_time,
+                "remaining_attempts": 0
+            }
+        )
 
     user_creds = get_user_creds(user_id)
-    
+
     if not user_creds:
-        return {"valid": False, "message": "User credentials not found"}
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "valid": False,
+                "message": "User credentials not found"
+            }
+        )
 
     if not user_creds[0].get('is_active', False):
-        return {"valid": False, "message": "Account deactivated"}
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "valid": False,
+                "message": "Account deactivated"
+            }
+        )
 
+    # Check PIN
     if str(pin_request.pin) == str(user_creds[0]['pin_number']):
         if user_id in failed_attempts:
             del failed_attempts[user_id]
         return {"valid": True}
-    else:
-        if user_id not in failed_attempts:
-            failed_attempts[user_id] = {'count': 0}
-        
-        failed_attempts[user_id]['count'] += 1
-      
-        if failed_attempts[user_id]['count'] >= 3:
-            lockout_time = datetime.now() + timedelta(seconds=120)
-            failed_attempts[user_id]['lockout_time'] = lockout_time
 
-            # Ensure DB lockout is set and committed
+    # Handle failed attempts
+    if user_id not in failed_attempts:
+        failed_attempts[user_id] = {'count': 0}
+
+    failed_attempts[user_id]['count'] += 1
+
+    if failed_attempts[user_id]['count'] >= 3:
+        lockout_time = datetime.now() + timedelta(seconds=120)
+        failed_attempts[user_id]['lockout_time'] = lockout_time
+
+        # You can also update DB cooldown here if needed
+        if user_cred:
             user_cred.attempt_duration = lockout_time
             try:
-                db_session.commit()
+                db_session.commit()  # assuming db_session is accessible
             except Exception as e:
                 db_session.rollback()
                 print("DB commit error:", e)
-                return {
-                    "valid": False,
-                    "message": "Failed to update lockout time in database",
-                    "cooldown": 120
-                }          
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "valid": False,
+                        "message": "Failed to update lockout time in database",
+                        "cooldown": 120,
+                        "remaining_attempts": 0
+                    }
+                )
 
-
-            return {
+        raise HTTPException(
+            status_code=400,
+            detail={
                 "valid": False,
                 "message": "Too many failed attempts. Please try again in 2 minutes",
-                "cooldown": 120
+                "cooldown": 120,
+                "remaining_attempts": 0
             }
+        )
 
-        remaining_attempts = 3 - failed_attempts[user_id]['count']
-        return {
+    remaining_attempts = 3 - failed_attempts[user_id]['count']
+    raise HTTPException(
+        status_code=400,
+        detail={
             "valid": False,
             "message": f"Invalid PIN. {remaining_attempts} attempts remaining",
-            "remaining_attempts": 0
+            "remaining_attempts": remaining_attempts
         }
+    )
 
 # ------- Update user profile -------
 @router.patch("/update-profile")
