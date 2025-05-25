@@ -25,7 +25,6 @@ async def login_auth(request: Request, user: schemas.UserLoginRequest):
         request.session['user'] = serialize_user(user_data)
 
         log_history(user_id=user_data.id, action="Logged in")
-        # TODO: User Session
         return {"message": "Login successful!"}
 
     except KeyError:

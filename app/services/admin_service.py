@@ -112,7 +112,7 @@ def serialize_user(user):
                 "is_current_holder": cred.is_current_holder,
                 "locker": {
                     "id": cred.locker.id,
-                    "name": cred.locker.name,
+                    "name": cred.locker.name,                    
                     "relay_pin": cred.locker.relay_pin,
                     "is_available": cred.locker.is_available
                 } if cred.locker else None
@@ -198,6 +198,7 @@ def get_user_creds(user_id):
                 "id": cred.id,
                 "rfid_serial_number": cred.rfid_serial_number,
                 "pin_number": cred.pin_number,
+                "attempt_duration": cred.attempt_duration,
                 "is_current_holder": cred.is_current_holder,
                 "is_active": cred.is_active,  # Add is_active status
                 "locker": {
@@ -212,6 +213,22 @@ def get_user_creds(user_id):
 
         return creds_info
 
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+
+def get_user_creds_by_user_id(user_id):
+    try:
+        # Query the database for the user's credentials
+        user_credentials = db_session.query(UserCredential).filter_by(user_id=user_id).first()
+        
+        # If no credentials are found, raise an HTTPException
+        if not user_credentials:
+            raise HTTPException(status_code=404, detail="User credentials not found")
+        
+        return user_credentials
+        
     except Exception as e:
         db_session.rollback()
         raise e

@@ -28,6 +28,7 @@ class UserCredential(Base):
     locker_id = Column(Integer, ForeignKey("lockers.id", ondelete="SET NULL"), nullable=True)
     rfid_serial_number = Column(String, nullable=False)
     pin_number = Column(String, nullable=False)
+    attempt_duration = Column(DateTime, nullable=True)
     is_current_holder = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
