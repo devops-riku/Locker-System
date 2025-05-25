@@ -1,5 +1,6 @@
 import json
 import shutil
+import time
 import traceback
 from uuid import uuid4
 import uuid
@@ -14,7 +15,6 @@ from app.models.database import *
 from app.models.models import *
 from app.services.mqtt import mqtt_client
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 
 
 
@@ -99,13 +99,31 @@ def search_page(request: Request):
 def c_(request: Request):
     return request.session.clear()
 
+
+class PinLockoutRequest(BaseModel):
+    user_id: int
+
+@router.post("/lockout")
+def publish_lockout(request: PinLockoutRequest):
+    try:
+        mqtt_payload = {
+            "user_id": str(request.user_id),
+            "lockout_duration": 120  
+        }
+        mqtt_client.publish("locker/validate_pin", json.dumps(mqtt_payload))
+
+        print('locked out user {user_id} for 2 minutes')
+    except Exception as e:
+        print("Error publishing to MQTT:", e)
+
 failed_attempts = {} 
+
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
     user_id = pin_request.user_id
     user_cred = get_user_creds_by_user_id(user_id)
-    
-    # Check if user is in cooldown using user_cred.attempt_duration
+
+    # Check cooldown
     if user_cred and user_cred.attempt_duration and datetime.now() < user_cred.attempt_duration:
         remaining_time = (user_cred.attempt_duration - datetime.now()).seconds
         return {
@@ -113,7 +131,7 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
             "message": f"Too many attempts. Please try again in {remaining_time} seconds",
             "cooldown": remaining_time
         }
-    
+
     user_creds = get_user_creds(user_id)
     
     if not user_creds:
@@ -133,21 +151,34 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
         failed_attempts[user_id]['count'] += 1
       
         if failed_attempts[user_id]['count'] >= 3:
-            lockout_time = datetime.now() + timedelta(seconds=30)
+            lockout_time = datetime.now() + timedelta(seconds=120)
             failed_attempts[user_id]['lockout_time'] = lockout_time
+
+            # Ensure DB lockout is set and committed
             user_cred.attempt_duration = lockout_time
-            db_session.commit()
+            try:
+                db_session.commit()
+            except Exception as e:
+                db_session.rollback()
+                print("DB commit error:", e)
+                return {
+                    "valid": False,
+                    "message": "Failed to update lockout time in database",
+                    "cooldown": 120
+                }          
+
+
             return {
                 "valid": False,
                 "message": "Too many failed attempts. Please try again in 2 minutes",
-                "cooldown": 30
+                "cooldown": 120
             }
-        
+
         remaining_attempts = 3 - failed_attempts[user_id]['count']
         return {
             "valid": False,
             "message": f"Invalid PIN. {remaining_attempts} attempts remaining",
-            "remaining_attempts": remaining_attempts
+            "remaining_attempts": 0
         }
 
 # ------- Update user profile -------

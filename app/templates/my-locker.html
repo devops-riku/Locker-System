@@ -94,7 +94,7 @@
         let $pinInput = $("#pinInput");
         let cooldownInterval = null;
         let remainingAttempts = 3;
-        let user_id = "{{request.session['user'].get('id')}}";
+        let user_id = "{{ request.session.get('user', {}).get('id', '') }}";
 
         // Function to handle cooldown
         function startCooldown(seconds) {
@@ -102,13 +102,13 @@
             $pinInput.prop("disabled", true);
             $countdown.text(`Please wait ${seconds} seconds before trying again`);
             $progressContainer.show();
-            
+
             let remaining = seconds;
             cooldownInterval = setInterval(() => {
                 remaining--;
                 $countdown.text(`Please wait ${remaining} seconds before trying again`);
                 $progressBar.css("width", (remaining / seconds) * 100 + "%");
-                
+
                 if (remaining <= 0) {
                     clearInterval(cooldownInterval);
                     $lock.prop("disabled", false);
@@ -120,7 +120,7 @@
             }, 1000);
         }
 
-        // Allow only numbers in the PIN input
+        // Allow only numeric input for the PIN
         $pinInput.on('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
@@ -128,39 +128,59 @@
         $lock.on("change", function() {
             if (!$lock.is(":checked")) {
                 const enteredPin = $pinInput.val();
-                
+
                 if (enteredPin.length !== 4) {
                     toastr.error('Please enter a 4-digit PIN');
                     $lock.prop("checked", true);
                     return;
                 }
 
-                // Validate the pin via Axios
-                axios.post('/validate-pin', { 
-                    user_id: user_id, 
-                    pin: enteredPin })
+                axios.post('/validate-pin', {
+                    user_id: user_id,
+                    pin: enteredPin
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
                 .then(response => {
                     if (response.data.cooldown) {
                         startCooldown(response.data.cooldown);
                         $lock.prop("checked", true);
                         return;
                     }
-                    
+
                     if (!response.data.valid) {
                         if (response.data.remaining_attempts !== undefined) {
                             remainingAttempts = response.data.remaining_attempts;
-                            toastr.error(`${response.data.message}`);
+                            toastr.error(response.data.message);
+
+                            if (remainingAttempts === 0) {
+                                axios.post('/lockout', {
+                                    user_id: user_id
+                                }, {
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(() => {
+                                    console.log('Lockout API triggered');
+                                })
+                                .catch((err) => {
+                                    console.error('Lockout API error:', err);
+                                });
+                            }
+
                         } else {
                             toastr.error(response.data.message || 'PIN is incorrect');
                         }
                         $lock.prop("checked", true);
                         return;
                     }
-                    
+
                     toastr.success('Locker UNLOCKED');
                     console.log("Locker UNLOCKED");
-                    
-                    // Send Axios POST request to unlock the locker
+
                     axios.post('/mqtt/unlock-locker', {
                         action: 'Locker Unlocked by System'
                     })
@@ -172,10 +192,7 @@
                         toastr.error('Error unlocking locker');
                     });
 
-                    // Disable the lock button while countdown is active
                     $lock.prop("disabled", true);
-
-                    // Start Countdown
                     let counter = 3;
                     $countdown.text("Automatically locking in " + counter + "s");
                     $progressContainer.show();
@@ -188,8 +205,6 @@
                             $progressBar.css("width", (counter / 3) * 100 + "%");
                         } else {
                             clearInterval(countdownInterval);
-
-                            // Relock after countdown
                             $lock.prop("checked", true);
                             $lock.prop("disabled", false);
                             toastr.info('Locker LOCKED');
@@ -201,20 +216,13 @@
                     }, 1000);
                 })
                 .catch(error => {
-                    if (error.response && error.response.status === 400) {
-                        const cooldown = error.response.data.detail.cooldown || 3;
-                        startCooldown(cooldown);
-                        toastr.error(error.response.data.detail.message);
-                    } else {
-                        console.error('Error validating pin:', error);
-                        toastr.error('Error validating PIN');
-                    }
+                    console.error('Error validating pin:', error);
+                    toastr.error('Error validating PIN');
                     $lock.prop("checked", true);
                 });
             }
         });
 
-        // Initialize Toastr
         toastr.options = {
             "closeButton": true,
             "debug": false,
@@ -231,7 +239,8 @@
             "hideEasing": "linear",
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut"
-        }
+        };
     });
 </script>
+
 {% endblock %}
