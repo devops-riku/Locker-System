@@ -86,3 +86,19 @@ class PinUpdate(BaseModel):
 class AddHistoryLogRequest(BaseModel):
     user_id: int
     action: str
+
+
+class RegisterUserRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    password: str
+    id_number: str
+    address: str
+    rfid: str = Field(None, max_length=12)
+    pin_number: str = Field(None, max_length=4) 
+
+
+class SetAccountActiveRequest(BaseModel):
+    user_id: int
+    is_active: bool

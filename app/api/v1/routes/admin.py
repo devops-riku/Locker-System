@@ -69,6 +69,7 @@ async def get_user_lists(page_number: int = Query(1, ge=1), page_size: int = Que
             "Name": f"{user.first_name} {user.last_name}",
             "email": user.email,
             "id_number": user.id_number,
+            "is_active": user.is_active,
             "credentials": [
                 {
                     "locker": {
@@ -105,6 +106,7 @@ async def get_user(user_id: int):
         "email": user.email,
         "id_number": user.id_number,
         "address": user.address,
+        "is_active": user.is_active,
         "credentials": [
             {
                 "locker": {
@@ -296,3 +298,30 @@ async def get_history(request: Request):
 async def add_history(request: Request, data: AddHistoryLogRequest):
     log_history(user_id=data.user_id, action=data.action)
     return {"message": "History log added successfully."}
+
+
+@router.put("/set-account-active")
+async def set_account_active(request: Request, data: SetAccountActiveRequest):
+    try:
+        print(data)
+        
+        # Attempt to query the user from the database
+        user = db_session.query(User).filter_by(id=data.user_id).first()
+        
+        # If user is not found, raise an exception
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+
+        # Update the user's active status
+        user.is_active = data.is_active
+        
+        # Commit the changes to the database
+        db_session.commit()
+        
+        return {"message": f"Account status for user {user.email} has been updated to {data.is_active}."}
+
+    
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        db_session.rollback()
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

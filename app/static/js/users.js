@@ -129,32 +129,49 @@ const grid = new gridjs.Grid({
         {
             name: 'Actions',
             formatter: (cell, row) => {
+                const userId = row.cells[4].data;
+                // We'll need the is_active value from the data source, so fetch from row or data:
+                const userIsActive = row.cells[5].data; // We'll add is_active as hidden 6th col below
+                console.log(userIsActive);
+                const activateButtonText = userIsActive ? 'Disable': 'Activate';
+
                 return gridjs.h('div', {className: 'action-buttons'}, [
-                    gridjs.h('button', {
-                        className: 'btn btn-sm btn-outline-primary me-1',
-                        onClick: () => viewUser(row.cells[4].data)
-                    }, 'View'),
-                    gridjs.h('button', {
-                        className: 'btn btn-sm btn-outline-secondary me-1',
-                        onClick: () => editUser(row.cells[4].data)
-                    }, 'Edit'),
-                    gridjs.h('button', {
-                        className: 'btn btn-sm btn-outline-danger',
-                        onClick: () => deleteUser(row.cells[4].data)
-                    }, 'Delete')
+                gridjs.h('button', {
+                    className: 'btn btn-sm btn-outline-primary me-1',
+                    onClick: () => viewUser(userId)
+                }, 'View'),
+                gridjs.h('button', {
+                    className: 'btn btn-sm btn-outline-secondary me-1',
+                    onClick: () => editUser(userId)
+                }, 'Edit'),
+                gridjs.h('button', {
+                    className: 'btn btn-sm btn-outline-danger me-1',
+                    onClick: () => deleteUser(userId)
+                }, 'Delete'),
+                gridjs.h('button', {
+                    className: 'btn btn-sm btn-outline-warning',
+                    onClick: () => openActivateModal(userId, userIsActive)
+                }, activateButtonText)
                 ]);
             }
+        },
+        {
+            name: 'User Is_Active',
+            hidden: true 
         }
+
     ],
     server: {
         url: '/admin/user-lists',
-        then: data => data.results.map(user => [
+       then: data => data.results.map(user => [
             `${user.Name}`,
             user.email,
             user.credentials[0]?.rfid_serial_number || 'Not Set',
             user.credentials[0]?.locker?.name || 'Not Assigned',
-            user.id // This is used for the actions, it's not displayed
+            user.id,
+            user.is_active || false 
         ]),
+        
         total: data => data.total
     },
     sort: true,
@@ -332,6 +349,61 @@ document.getElementById('confirmDeleteUser').addEventListener('click', function 
             toastr.error("Failed to delete user.");
         });
 });
+
+
+let selectedUserIdForActivation = null;
+  let selectedUserCurrentStatus = null;
+
+  function openActivateModal(userId) {
+    selectedUserIdForActivation = userId;
+
+    // Fetch user info to get current active status
+    axios.get(`/admin/user/${userId}`)
+      .then(response => {
+        const user = response.data;
+        selectedUserCurrentStatus = user.is_active;
+
+        // Update modal text dynamically
+        const actionText = selectedUserCurrentStatus ? 'disable' : 'activate';
+        document.getElementById('activateActionText').textContent = actionText;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('activateUserModal'));
+        modal.show();
+      })
+      .catch(error => {
+        console.error('Failed to fetch user status:', error);
+        toastr.error('Failed to load user status.');
+      });
+  }
+
+  document.getElementById('confirmActivateBtn').addEventListener('click', function() {
+    if (!selectedUserIdForActivation) return;
+
+    // If user is currently active, next status is false (disable)
+    // Else next status is true (activate)
+    const newStatus = !selectedUserCurrentStatus;
+
+    axios.put('/admin/set-account-active', {
+      user_id: selectedUserIdForActivation,
+      is_active: newStatus
+    })
+    .then(response => {
+      toastr.success(`User has been ${newStatus ? 'activated' : 'disabled'} successfully.`);
+
+      // Hide modal
+      const modalEl = document.getElementById('activateUserModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+
+      // Refresh grid data
+      grid.updateConfig({}).forceRender();
+    })
+    .catch(error => {
+      console.error('Error updating user status:', error);
+      toastr.error('Failed to update user status.');
+    });
+  });
 
 function clearAddUserForm() {
     document.getElementById('first_name').value = '';

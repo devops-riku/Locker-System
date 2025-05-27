@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <link rel="stylesheet" href="/app/static/css/login.css" />
     <style>
-        body, html {
+        body,
+        html {
             height: 100%;
             margin: 0;
         }
@@ -45,6 +46,19 @@
             text-align: center;
             font-weight: 600;
         }
+
+        /* Added margin-bottom to form groups for spacing */
+        .form-group {
+            margin-bottom: 1.25rem; /* 20px spacing */
+            width: 100%;
+        }
+
+        /* Fix: Make inputs full width */
+        .form-control {
+            width: 100% !important;
+            box-sizing: border-box;
+            /* Ensure padding doesn't affect width */
+        }
     </style>
 </head>
 
@@ -52,7 +66,8 @@
     <div class="center-container">
         <form class="login-container animate__animated animate__fadeIn" onsubmit="signUp(event)">
 
-            <img src="https://img.freepik.com/free-vector/locker_53876-25496.jpg" alt="Logo" class="logo animate__animated animate__zoomIn" />
+            <img src="https://img.freepik.com/free-vector/locker_53876-25496.jpg" alt="Logo"
+                class="logo animate__animated animate__zoomIn" />
             <h1 class="welcome-text animate__animated animate__fadeInDown">Create an Account</h1>
 
             <div class="divider text-center"><span>Sign Up with Email</span></div>
@@ -63,16 +78,6 @@
                         <label for="firstname">First Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="firstname" placeholder="Enter your first name" required />
                     </div>
-
-                    <div class="form-group">
-                        <label for="idnumber">ID Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="idnumber" placeholder="Enter your ID number" required />
-                    </div>
-
-                    <div class="form-group mt-2">
-                        <label for="password">Password <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="password" placeholder="Enter your password" required />
-                    </div>
                 </div>
 
                 <div class="col-12 col-md-6">
@@ -80,27 +85,73 @@
                         <label for="lastname">Last Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="lastname" placeholder="Enter your last name" required />
                     </div>
+                </div>
+            </div>
 
+            <div class="row">
+                <div class="col-12">
                     <div class="form-group">
-                        <label for="address">Address <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="address" placeholder="Enter your address" maxlength="100" required />
-                    </div>
-
-                    <div class="form-group mt-2">
-                        <label for="confirmPassword">Confirm Password <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" required />
+                        <label for="idnumber">ID Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="idnumber" placeholder="Enter your ID number" required />
                     </div>
                 </div>
             </div>
 
-            <div class="form-group mt-2">
-                <label for="email">Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="email" placeholder="Enter your email" required />
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="address">Address <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="address" placeholder="Enter your address" maxlength="100" required />
+                    </div>
+                </div>
             </div>
 
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" placeholder="Enter your email" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div class="form-group mt-2">
+                        <label for="password">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" placeholder="Enter your password" required />
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="form-group mt-2">
+                        <label for="confirmPassword">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password"
+                            required />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Added RFID and PIN fields -->
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    <div class="form-group mt-2">
+                        <label for="rfid">RFID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="rfid" placeholder="Enter your RFID" required />
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="form-group mt-2">
+                        <label for="pin">4-Digit PIN <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="pin" placeholder="Enter a 4-digit PIN" maxlength="4" required />
+                    </div>
+                </div>
+            </div>
 
             <div class="d-flex text-center mt-3">
-                <button type="submit" class="btn btn-full btn-black w-100 animate__animated animate__pulse" id="signUpButton">Sign Up</button>
+                <button type="submit"
+                    class="btn btn-full btn-black w-100 animate__animated animate__pulse" id="signUpButton">Sign Up</button>
             </div>
 
             <div class="text-center mt-3">
@@ -126,9 +177,11 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const rfid = document.getElementById('rfid').value.trim();
+            const pin = document.getElementById('pin').value.trim();
             const signUpButton = document.getElementById("signUpButton");
 
-            if (!firstname || !lastname || !idnumber || !address || !email || !password || !confirmPassword) {
+            if (!firstname || !lastname || !idnumber || !address || !email || !password || !confirmPassword || !rfid || !pin) {
                 toastr.warning("Please fill in all fields.");
                 return;
             }
@@ -138,16 +191,23 @@
                 return;
             }
 
+            if (pin.length !== 4 || isNaN(pin)) {
+                toastr.error("Please enter a valid 4-digit PIN.");
+                return;
+            }
+
             signUpButton.disabled = true;
             signUpButton.innerHTML = "Signing up...";
 
             axios.post('/api/v1/auth/register', {
-                firstname,
-                lastname,
-                idnumber,
-                address,
-                email,
-                password
+                first_name: firstname,
+                last_name: lastname,
+                id_number: idnumber,
+                address: address,
+                email: email,
+                password: password,
+                rfid: rfid,
+                pin: pin
             })
                 .then(response => {
                     toastr.success(response.data.message || "Registration successful!");

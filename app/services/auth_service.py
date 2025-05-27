@@ -27,11 +27,11 @@ def init_reset_password(access_token, new_password):
     supabase.auth.update_user({"password": new_password})
 
 
-def create_auth_user(email, password):
+def create_auth_user(email, password, email_confirm=True):
     response = supabase.auth.admin.create_user({
         "email": f'{email}',
         "password": f'{password}',
-        "email_confirm": True,
+        "email_confirm": email_confirm,
 });
     return response
 

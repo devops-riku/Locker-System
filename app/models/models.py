@@ -14,6 +14,7 @@ class User(Base):
     address = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     is_super_admin = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String, nullable=True)
     
