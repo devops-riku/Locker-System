@@ -95,7 +95,6 @@ class RegisterUserRequest(BaseModel):
     password: str
     id_number: str
     address: str
-    rfid: str = Field(None, max_length=12)
     pin_number: str = Field(None, max_length=4) 
 
 

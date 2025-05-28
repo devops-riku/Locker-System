@@ -56,7 +56,7 @@ def CreateUser(first_name=None, last_name=None, id_number=None, address=None, em
             json_payload = json.dumps(payload)
             mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
 
-        if locker_number:
+        if id_number:
             user_credentials = UserCredential(user_id=user.id, locker_id=locker_number,
                                           rfid_serial_number=rfid_serial_number, pin_number=pin_number)
             db_session.add(user_credentials)
@@ -77,11 +77,8 @@ def RegisterUser(first_name=None, last_name=None, id_number=None, address=None, 
     except Exception as e:
         db_session.rollback()
         raise e
-
-
-
-
-                                    
+    
+    
 def get_user_by_id(user_id):
     try:
         user = (db_session.query(User)

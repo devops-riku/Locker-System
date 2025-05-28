@@ -302,16 +302,14 @@ async def add_history(request: Request, data: AddHistoryLogRequest):
 
 @router.put("/set-account-active")
 async def set_account_active(request: Request, data: SetAccountActiveRequest):
-    try:
-        print(data)
-        
+    try:    
         # Attempt to query the user from the database
         user = db_session.query(User).filter_by(id=data.user_id).first()
         
         # If user is not found, raise an exception
         if not user:
             raise HTTPException(status_code=404, detail="User not found.")
-
+        
         # Update the user's active status
         user.is_active = data.is_active
         

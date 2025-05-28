@@ -49,12 +49,19 @@ async def login_auth(request: Request, user: schemas.UserLoginRequest):
 async def register_user(user: schemas.RegisterUserRequest):
     try:
         supabase = get_supabase_client()
+        print(user)
         # Attempt to create the user in the database
         auth_user_list = supabase.auth.admin.list_users()
-        print(auth_user_list)
         user_exists = any(user.email.strip().lower() == u.email for u in auth_user_list)
         if user_exists:
             raise HTTPException(status_code=400, detail="Email is already in use in authentication system.")
+        
+         # Attempt to create the authentication user
+        try:
+            create_auth_user(email=user.email, password=user.password, email_confirm=True)
+        except Exception as e:
+            print(f"Error in create_auth_user: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error in creating authentication user: {str(e)}")
     
         try:
             CreateUser(
@@ -64,7 +71,7 @@ async def register_user(user: schemas.RegisterUserRequest):
                 address=user.address,
                 email=user.email.strip().lower(),
                 locker_number=None,
-                rfid_serial_number=user.rfid,
+                rfid_serial_number=None,
                 pin_number=user.pin_number,
                 created_by=None,
                 is_super_admin=False,
@@ -74,12 +81,6 @@ async def register_user(user: schemas.RegisterUserRequest):
             print(f"Error in CreateUser: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Error in creating user: {str(e)}")
 
-        # Attempt to create the authentication user
-        try:
-            create_auth_user(email=user.email, password=user.password, email_confirm=False)
-        except Exception as e:
-            print(f"Error in create_auth_user: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Error in creating authentication user: {str(e)}")
 
         return {"message": "Registration Successful!"}
     
