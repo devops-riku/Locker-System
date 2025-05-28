@@ -53,7 +53,7 @@ class UpdateUserRequest(BaseModel):
     address: str
     assigned_locker: int
     pin_number: str = Field(None, max_length=4)
-    rfid_serial_number: str = Field(None, min_length=8, max_length=12)
+    rfid_serial_number: str = Field(None)
     is_active: bool
 
 

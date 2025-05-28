@@ -152,9 +152,9 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
     
     # Update PIN and RFID serial number
     if user.pin_number:
-        user_credentials.pin_number = user.pin_number
+        user_credentials.pin_number = user.pin_number.strip()
     if user.rfid_serial_number:
-        user_credentials.rfid_serial_number = user.rfid_serial_number
+        user_credentials.rfid_serial_number = user.rfid_serial_number.strip()
 
     # Update is_active status
     user_credentials.is_active = user.is_active
