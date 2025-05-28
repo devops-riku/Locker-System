@@ -78,7 +78,7 @@ def RegisterUser(first_name=None, last_name=None, id_number=None, address=None, 
         db_session.rollback()
         raise e
     
-    
+
 def get_user_by_id(user_id):
     try:
         user = (db_session.query(User)
@@ -146,6 +146,14 @@ def get_all_lockers():
     try:
         lockers = db_session.query(Locker).all()
         return lockers
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+def get_locker_by_id(id):
+    try:
+        locker = db_session.query(Locker).filter_by(id=id).first()
+        return locker
     except Exception as e:
         db_session.rollback()
         raise e

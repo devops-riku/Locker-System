@@ -8,7 +8,7 @@ from app.core.config import get_supabase_client
 from app.models.database import db_session
 from app.models.models import History, Locker, User, UserCredential
 from app.models.schemas import *
-from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_user_locker_info, get_user_session, is_super_admin
+from app.services.admin_service import AddLocker, CreateUser, UpdateLockerAvailability, get_locker_by_id, get_user_locker_info, get_user_session, is_super_admin
 from app.services.auth_service import create_auth_user, delete_auth_user
 from datetime import datetime
 import pytz
@@ -128,11 +128,12 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
     if not update_user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    
     payload = {
         "user_id": update_user.id,
         "pin": f"{user.pin_number}",
         "rfid": f"{user.rfid_serial_number}",
-        "relay_pin": get_user_locker_info(user_id)[0].get("relay_pin"),
+        "relay_pin": get_locker_by_id(user.assigned_locker).relay_pin,
         "is_active": user.is_active}
     
     json_payload = json.dumps(payload)
