@@ -53,7 +53,7 @@ class UpdateUserRequest(BaseModel):
     address: str
     assigned_locker: int
     pin_number: str = Field(None, max_length=4)
-    rfid_serial_number: str = Field(None, min_length=8, max_length=12)
+    rfid_serial_number: str = Field(None)
     is_active: bool
 
 
@@ -86,3 +86,18 @@ class PinUpdate(BaseModel):
 class AddHistoryLogRequest(BaseModel):
     user_id: int
     action: str
+
+
+class RegisterUserRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    password: str
+    id_number: str
+    address: str
+    pin_number: str = Field(None, max_length=4) 
+
+
+class SetAccountActiveRequest(BaseModel):
+    user_id: int
+    is_active: bool

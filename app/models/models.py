@@ -14,6 +14,7 @@ class User(Base):
     address = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     is_super_admin = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String, nullable=True)
     
@@ -26,8 +27,9 @@ class UserCredential(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     locker_id = Column(Integer, ForeignKey("lockers.id", ondelete="SET NULL"), nullable=True)
-    rfid_serial_number = Column(String, nullable=False)
+    rfid_serial_number = Column(String, nullable=True)
     pin_number = Column(String, nullable=False)
+    attempt_duration = Column(DateTime, nullable=True)
     is_current_holder = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

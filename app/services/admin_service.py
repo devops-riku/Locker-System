@@ -37,11 +37,11 @@ async def is_super_admin(request: Request) -> bool:
     return True
 
 
-def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False):
+def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False, is_active=True):
     try:
 
         get_locker_by_id = db_session.query(Locker).filter_by(id=locker_number).first()
-        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin)
+        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
         db_session.add(user)
         db_session.flush()
 
@@ -50,7 +50,7 @@ def CreateUser(first_name=None, last_name=None, id_number=None, address=None, em
             "user_id": user.id,
             "pin": str(pin_number),
             "rfid": f"{rfid_serial_number}",
-            "relay_pin": get_locker_by_id.relay_pin,
+            "relay_pin": get_locker_by_id.relay_pin if get_locker_by_id else 15,
             "is_active": True
         }
             json_payload = json.dumps(payload)
@@ -66,9 +66,19 @@ def CreateUser(first_name=None, last_name=None, id_number=None, address=None, em
     except Exception as e:
         db_session.rollback()
         raise e
+    
+def RegisterUser(first_name=None, last_name=None, id_number=None, address=None, email=None, created_by=None, is_super_admin=False, is_active=False):
+    try:
 
+        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
+        db_session.add(user)
+        db_session.commit()      
+    
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
 
-                                    
 def get_user_by_id(user_id):
     try:
         user = (db_session.query(User)
@@ -112,7 +122,7 @@ def serialize_user(user):
                 "is_current_holder": cred.is_current_holder,
                 "locker": {
                     "id": cred.locker.id,
-                    "name": cred.locker.name,
+                    "name": cred.locker.name,                    
                     "relay_pin": cred.locker.relay_pin,
                     "is_available": cred.locker.is_available
                 } if cred.locker else None
@@ -136,6 +146,14 @@ def get_all_lockers():
     try:
         lockers = db_session.query(Locker).all()
         return lockers
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+def get_locker_by_id(id):
+    try:
+        locker = db_session.query(Locker).filter_by(id=id).first()
+        return locker
     except Exception as e:
         db_session.rollback()
         raise e
@@ -198,6 +216,7 @@ def get_user_creds(user_id):
                 "id": cred.id,
                 "rfid_serial_number": cred.rfid_serial_number,
                 "pin_number": cred.pin_number,
+                "attempt_duration": cred.attempt_duration,
                 "is_current_holder": cred.is_current_holder,
                 "is_active": cred.is_active,  # Add is_active status
                 "locker": {
@@ -212,6 +231,22 @@ def get_user_creds(user_id):
 
         return creds_info
 
+    except Exception as e:
+        db_session.rollback()
+        raise e
+    
+
+def get_user_creds_by_user_id(user_id):
+    try:
+        # Query the database for the user's credentials
+        user_credentials = db_session.query(UserCredential).filter_by(user_id=user_id).first()
+        
+        # If no credentials are found, raise an HTTPException
+        if not user_credentials:
+            raise HTTPException(status_code=404, detail="User credentials not found")
+        
+        return user_credentials
+        
     except Exception as e:
         db_session.rollback()
         raise e
