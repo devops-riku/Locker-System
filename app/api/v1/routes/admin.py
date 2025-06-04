@@ -24,7 +24,7 @@ router = APIRouter(prefix="/admin")
 @router.post("/create-user")
 async def create_user(user: CreateUserRequest, request: Request):
     create_auth_user(user.email, user.password)
-    CreateUser(user.first_name, user.last_name, user.id_number, user.address, user.email,
+    CreateUser(user.first_name, user.last_name, user.address, user.email,
                user.locker_number, user.rfid_serial_number, user.pin_number)
     
     UpdateLockerAvailability(locker_id=user.locker_number, is_available=False)
@@ -68,7 +68,6 @@ async def get_user_lists(page_number: int = Query(1, ge=1), page_size: int = Que
             "id": user.id,
             "Name": f"{user.first_name} {user.last_name}",
             "email": user.email,
-            "id_number": user.id_number,
             "is_active": user.is_active,
             "credentials": [
                 {
@@ -104,7 +103,6 @@ async def get_user(user_id: int):
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
-        "id_number": user.id_number,
         "address": user.address,
         "is_active": user.is_active,
         "credentials": [
@@ -141,7 +139,6 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
 
     update_user.first_name = user.first_name
     update_user.last_name = user.last_name
-    update_user.id_number = user.id_number
     update_user.address = user.address
 
     user_credentials = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first()

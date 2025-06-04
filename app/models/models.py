@@ -10,7 +10,6 @@ class User(Base):
     avatar = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
-    id_number = Column(String, unique=True, nullable=True)
     address = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     is_super_admin = Column(Boolean, default=False)

@@ -37,46 +37,68 @@ async def is_super_admin(request: Request) -> bool:
     return True
 
 
-def CreateUser(first_name=None, last_name=None, id_number=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False, is_active=True):
+def CreateUser(first_name=None, last_name=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False, is_active=True):
     try:
-
         get_locker_by_id = db_session.query(Locker).filter_by(id=locker_number).first()
-        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
+        user = User(first_name=first_name, last_name=last_name, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
         db_session.add(user)
         db_session.flush()
 
         if not is_super_admin:
             payload = {
-            "user_id": user.id,
-            "pin": str(pin_number),
-            "rfid": f"{rfid_serial_number}",
-            "relay_pin": get_locker_by_id.relay_pin if get_locker_by_id else 15,
-            "is_active": True
-        }
+                "user_id": user.id,
+                "pin": str(pin_number),
+                "rfid": f"{rfid_serial_number}",
+                "relay_pin": get_locker_by_id.relay_pin if get_locker_by_id else 15,
+                "is_active": True
+            }
             json_payload = json.dumps(payload)
             mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
 
-        if id_number:
-            user_credentials = UserCredential(user_id=user.id, locker_id=locker_number,
+        user_credentials = UserCredential(user_id=user.id, locker_id=locker_number,
                                           rfid_serial_number=rfid_serial_number, pin_number=pin_number)
-            db_session.add(user_credentials)
+        db_session.add(user_credentials)
         db_session.commit()
-        
-    
     except Exception as e:
         db_session.rollback()
         raise e
-    
-def RegisterUser(first_name=None, last_name=None, id_number=None, address=None, email=None, created_by=None, is_super_admin=False, is_active=False):
-    try:
 
-        user = User(first_name=first_name, last_name=last_name, id_number=id_number, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
+def RegisterUser(first_name=None, last_name=None, address=None, email=None, created_by=None, is_super_admin=False, is_active=False):
+    try:
+        user = User(first_name=first_name, last_name=last_name, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
         db_session.add(user)
         db_session.commit()      
-    
     except Exception as e:
         db_session.rollback()
         raise e
+
+def serialize_user(user):
+    return {
+        "id": user.id,
+        "avatar": user.avatar,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "address": user.address,
+        "is_super_admin": user.is_super_admin,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "credentials": [
+            {
+                "id": cred.id,
+                "rfid_serial_number": cred.rfid_serial_number,
+                "pin_number": cred.pin_number,
+                "is_current_holder": cred.is_current_holder,
+                "locker": {
+                    "id": cred.locker.id,
+                    "name": cred.locker.name,                    
+                    "relay_pin": cred.locker.relay_pin,
+                    "is_available": cred.locker.is_available
+                } if cred.locker else None
+            }
+            for cred in user.credentials
+        ]
+    }
+
     
 
 def get_user_by_id(user_id):
@@ -110,7 +132,6 @@ def serialize_user(user):
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
-        "id_number": user.id_number,
         "address": user.address,
         "is_super_admin": user.is_super_admin,
         "created_at": user.created_at.isoformat() if user.created_at else None,

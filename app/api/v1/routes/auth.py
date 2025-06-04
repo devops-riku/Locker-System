@@ -67,7 +67,6 @@ async def register_user(user: schemas.RegisterUserRequest):
             CreateUser(
                 first_name=user.first_name,
                 last_name=user.last_name,
-                id_number=user.id_number,
                 address=user.address,
                 email=user.email.strip().lower(),
                 locker_number=None,

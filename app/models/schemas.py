@@ -16,7 +16,7 @@ class UserLoginRequest(BaseModel):
 class CreateUserRequest(BaseModel):
     first_name: str = Field(...)
     last_name: str = Field(...)
-    id_number: str = Field(...)
+
     address: str = Field(...)
     email: str = Field(...)
     password: str = Field(...)
@@ -49,7 +49,7 @@ class UpdateLockerRequest(BaseModel):
 class UpdateUserRequest(BaseModel):
     first_name: str
     last_name: str
-    id_number: str
+
     address: str
     assigned_locker: int
     pin_number: str = Field(None, max_length=4)
@@ -71,7 +71,7 @@ class ProfileUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
-    id_number: Optional[str] = None
+
 
 
 class PasswordUpdate(BaseModel):
@@ -93,7 +93,6 @@ class RegisterUserRequest(BaseModel):
     last_name: str
     email: str
     password: str
-    id_number: str
     address: str
     pin_number: str = Field(None, max_length=4) 
 

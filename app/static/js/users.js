@@ -239,7 +239,6 @@ document.getElementById('addUserForm').addEventListener('submit', function(e) {
 
     const first_name = document.getElementById('first_name').value;
     const last_name = document.getElementById('last_name').value;
-    const id_number = document.getElementById('id_number').value;
     const address = document.getElementById('address').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -250,7 +249,6 @@ document.getElementById('addUserForm').addEventListener('submit', function(e) {
     const userData = {
         first_name,
         last_name,
-        id_number,
         address,
         email,
         password,
@@ -287,7 +285,7 @@ document.getElementById('editUserForm').addEventListener('submit', function (e) 
     const first_name = document.getElementById('editFirstName').value;
     const last_name = document.getElementById('editLastName').value;
     const email = document.getElementById('editEmail').value;
-    const id_number = document.getElementById('editIdNumber').value;
+
     const address = document.getElementById('editAddress').value;
     const assigned_locker = document.getElementById('editLocker').value;
     const pin_number = document.getElementById('editPinNumber').value;
@@ -297,7 +295,6 @@ document.getElementById('editUserForm').addEventListener('submit', function (e) 
     const payload = {
         first_name,
         last_name,
-        id_number,
         address,
         email,
         assigned_locker,
@@ -408,7 +405,6 @@ let selectedUserIdForActivation = null;
 function clearAddUserForm() {
     document.getElementById('first_name').value = '';
     document.getElementById('last_name').value = '';
-    document.getElementById('id_number').value = '';
     document.getElementById('address').value = '';
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
@@ -465,7 +461,7 @@ function viewUser(id) {
                 const userDetailsHtml = `
                     <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
                     <p><strong>Email:</strong> ${user.email}</p>
-                    <p><strong>ID Number:</strong> ${user.id_number}</p>
+
                     <p><strong>Address:</strong> ${user.address}</p>
                     <p><strong>Assigned Locker:</strong> ${user.credentials[0]?.locker?.name || 'Not Assigned'}</p>
                     <p><strong>PIN Number:</strong> ${user.credentials[0]?.pin_number || 'Not Set'}</p>
@@ -493,7 +489,6 @@ function editUser(id) {
         document.getElementById('editUserId').value = user.id;
         document.getElementById('editFirstName').value = user.first_name;
         document.getElementById('editLastName').value = user.last_name;
-        document.getElementById('editIdNumber').value = user.id_number;
         document.getElementById('editEmail').value = user.email;
         document.getElementById('editAddress').value = user.address;
         document.getElementById('editPinNumber').value = user.credentials[0]?.pin_number || '';
