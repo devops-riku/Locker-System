@@ -127,33 +127,34 @@ const grid = new gridjs.Grid({
         "RFID Serial Number",
         "Locker",
         {
-            name: 'Actions',
-            formatter: (cell, row) => {
-                const userId = row.cells[4].data;
-                // We'll need the is_active value from the data source, so fetch from row or data:
-                const userIsActive = row.cells[5].data; // We'll add is_active as hidden 6th col below
-                console.log(userIsActive);
-                const activateButtonText = userIsActive ? 'Disable': 'Activate';
+    name: 'Actions',
+    formatter: (cell, row) => {
+        const userId = row.cells[4].data;
+        const userIsActive = row.cells[5].data;
+        const activateButtonText = userIsActive ? 'Disable' : 'Activate';
+        const activateButtonClass = userIsActive
+            ? 'btn btn-sm btn-outline-success'
+            : 'btn btn-sm btn-outline-danger';
 
-                return gridjs.h('div', {className: 'action-buttons'}, [
-                gridjs.h('button', {
-                    className: 'btn btn-sm btn-outline-primary me-1',
-                    onClick: () => viewUser(userId)
-                }, 'View'),
-                gridjs.h('button', {
-                    className: 'btn btn-sm btn-outline-secondary me-1',
-                    onClick: () => editUser(userId)
-                }, 'Edit'),
-                gridjs.h('button', {
-                    className: 'btn btn-sm btn-outline-danger me-1',
-                    onClick: () => deleteUser(userId)
-                }, 'Delete'),
-                gridjs.h('button', {
-                    className: 'btn btn-sm btn-outline-warning',
-                    onClick: () => openActivateModal(userId, userIsActive)
-                }, activateButtonText)
-                ]);
-            }
+        return gridjs.h('div', {className: 'action-buttons'}, [
+            gridjs.h('button', {
+                className: 'btn btn-sm btn-outline-primary me-1',
+                onClick: () => viewUser(userId)
+            }, 'View'),
+            gridjs.h('button', {
+                className: 'btn btn-sm btn-outline-secondary me-1',
+                onClick: () => editUser(userId)
+            }, 'Edit'),
+            gridjs.h('button', {
+                className: 'btn btn-sm btn-outline-warning me-1',
+                onClick: () => deleteUser(userId)
+            }, 'Delete'),
+            gridjs.h('button', {
+                className: activateButtonClass,
+                onClick: () => openActivateModal(userId, userIsActive)
+            }, activateButtonText)
+        ]);
+    }
         },
         {
             name: 'User Is_Active',
