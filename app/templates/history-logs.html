@@ -20,16 +20,12 @@
         </div>
         <!-- Date Range Filter -->
         <div class="mb-3 d-flex align-items-center pt-4 ">
-
-        <label for="start-date" class="form-label me-2 mb-0" style="color: white;">From:</label>
-        <input type="date" id="start-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
-
-        <label for="end-date" class="form-label me-2 mb-0" style="color: white;">To:</label>
-        <input type="date" id="end-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
-
-        <button id="filter-date-btn" class="btn btn-primary btn-sm me-2">Filter</button>
-        <button id="clear-date-btn" class="btn btn-secondary btn-sm">Clear</button>
-
+            <label for="start-date" class="form-label me-2 mb-0" style="color: white;">From:</label>
+            <input type="date" id="start-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
+            <label for="end-date" class="form-label me-2 mb-0" style="color: white;">To:</label>
+            <input type="date" id="end-date" class="form-control form-control-sm me-3" style="max-width: 200px;">
+            <button id="filter-date-btn" class="btn btn-primary btn-sm me-2">Filter</button>
+            <button id="clear-date-btn" class="btn btn-secondary btn-sm">Clear</button>
         </div>
 
         <!-- Placeholder for Grid.js Table -->
@@ -82,34 +78,35 @@
             }
         }).render(document.getElementById("grid-table"));
     }
+
     // Function to filter data by date range
     function filterByDate() {
-    const startDate = document.getElementById("start-date").value;
-    const endDate = document.getElementById("end-date").value;
-    let filtered = allHistoryData;
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+        let filtered = allHistoryData;
 
-    filtered = filtered.filter(record => {
-        const recordDateStr = record.datetime.substring(0, 10);
-        const recordDate = new Date(recordDateStr);
-        let afterStart = true, beforeEnd = true;
+        filtered = filtered.filter(record => {
+            const recordDateStr = record.datetime.substring(0, 10);
+            const recordDate = new Date(recordDateStr);
+            let afterStart = true, beforeEnd = true;
 
-        if (startDate) {
-            const start = new Date(startDate);
-            start.setDate(start.getDate() - 1); // subtract 1 day
-            afterStart = recordDate > start; // strictly after (start - 1)
-        }
+            if (startDate) {
+                const start = new Date(startDate);
+                afterStart = recordDate >= start; // include start date
+            }
 
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999); // include full end date
-            beforeEnd = recordDate <= end;
-        }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // include full end date
+                beforeEnd = recordDate <= end;
+            }
 
-        return afterStart && beforeEnd;
-    });
+            return afterStart && beforeEnd;
+        });
 
-    renderGrid(filtered);
-}
+        renderGrid(filtered);
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         fetch("/admin/get_history")
             .then(response => response.json())      
@@ -125,7 +122,7 @@
                     renderGrid(allHistoryData);
                 });
 
-                // Print functionality (unchanged)
+                // Print functionality
                 document.getElementById("print-button").addEventListener("click", () => {
                     let tableHtml = `
                         <table>
@@ -138,21 +135,43 @@
                             </thead>
                             <tbody>
                     `;
+                    
                     // Use currently filtered data for printing
                     const startDate = document.getElementById("start-date").value;
                     const endDate = document.getElementById("end-date").value;
                     let filtered = allHistoryData;
+
+                    // Filter the data for printing
                     filtered = filtered.filter(record => {
                         const recordDateStr = record.datetime.substring(0, 10);                        
+                        const recordDate = new Date(recordDateStr);
                         let afterStart = true, beforeEnd = true;
+
+                        // Log the dates for debugging
+                        console.log("Record Date:", recordDateStr, "Start Date:", startDate, "End Date:", endDate);
+
                         if (startDate) {
-                            afterStart = recordDateStr >= startDate;
+                            const start = new Date(startDate);
+                            afterStart = recordDate >= start; // include start date
                         }
                         if (endDate) {
-                            beforeEnd = recordDateStr <= endDate;
+                            const end = new Date(endDate);
+                            end.setHours(23, 59, 59, 999); // include full end date
+                            beforeEnd = recordDate <= end;
                         }
                         return afterStart && beforeEnd;
                     });
+
+                    // Log filtered records for debugging
+                    console.log("Filtered Records for Print:", filtered);
+
+                    // Check if there are any records to print
+                    if (filtered.length === 0) {
+                        alert("No records found for the selected date range.");
+                        return; // Exit if no records
+                    }
+
+                    // Generate table rows
                     filtered.forEach(record => {
                         tableHtml += `
                             <tr>

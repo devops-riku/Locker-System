@@ -226,31 +226,31 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                            <label for="first_name" class="form-label">First Name <span class="text-danger"></span></label>
+                                            <input disabled type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                            <label for="last_name" class="form-label">Last Name <span class="text-danger"></span></label>
+                                            <input disabled type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                                    <label for="email" class="form-label">Email <span class="text-danger"></span></label>
+                                    <input disabled type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}" maxlength="100" required>
+                                    <label for="address" class="form-label">Address <span class="text-danger"></span></label>
+                                    <input disabled type="text" class="form-control" id="address" name="address" value="{{ user.address }}" maxlength="100" required>
                                 </div>
 
                              
                                 <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                    <!-- <button type="submit" class="btn btn-primary">Update Profile</button> -->
                                 </div>
                             </form>
                         </div>
@@ -269,6 +269,12 @@
                                         <button class="btn" type="button" onclick="togglePassword('new_password')">
                                             <i class="fas fa-eye"></i>
                                         </button>
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        Must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, and one number.
+                                    </div>
+                                    <div class="progress mt-2" style="height: 5px;">
+                                        <div id="newPasswordStrength" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                 </div>
                             </div>
@@ -289,6 +295,7 @@
                         </div>
                     </form>
                 </div>
+
 
                 <!-- PIN Tab -->
                 <div class="tab-pane fade" id="pin" role="tabpanel" aria-labelledby="pin-tab">
@@ -365,6 +372,81 @@
 <!-- Add Cropper.js for image cropping -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const newPasswordInput = document.getElementById('new_password');
+        const newPasswordStrengthBar = document.getElementById('newPasswordStrength');
+        const passwordForm = document.getElementById('passwordForm');
+        const changePasswordButton = passwordForm.querySelector('button[type="submit"]');
+
+        // Password validation regex patterns
+        const lowercaseRegex = /[a-z]/;
+        const uppercaseRegex = /[A-Z]/;
+        const numberRegex = /[0-9]/;
+
+        // Function to update button state
+        const updateButtonState = () => {
+            const newPassword = newPasswordInput.value;
+            const isValid = newPassword.length >= 8 && lowercaseRegex.test(newPassword) && uppercaseRegex.test(newPassword) && numberRegex.test(newPassword);
+            changePasswordButton.disabled = !isValid;
+        };
+
+        // Validate password and update progress bar
+        newPasswordInput.addEventListener('input', () => {
+            const val = newPasswordInput.value;
+
+            // Check length
+            const isLengthValid = val.length >= 8;
+            // Check lowercase, uppercase, number presence
+            const hasLower = lowercaseRegex.test(val);
+            const hasUpper = uppercaseRegex.test(val);
+            const hasNumber = numberRegex.test(val);
+
+            let score = 0;
+            if (isLengthValid) score += 25;
+            if (hasLower) score += 25;
+            if (hasUpper) score += 25;
+            if (hasNumber) score += 25;
+
+            newPasswordStrengthBar.style.width = score + '%';
+
+            // Change color based on score
+            if (score === 100) {
+                newPasswordStrengthBar.className = 'progress-bar bg-success';
+            } else if (score >= 50) {
+                newPasswordStrengthBar.className = 'progress-bar bg-warning';
+            } else {
+                newPasswordStrengthBar.className = 'progress-bar bg-danger';
+            }
+
+            // Update button state
+            updateButtonState();
+        });
+
+        // Validate on form submit
+        passwordForm.addEventListener('submit', (e) => {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const isValid = newPassword.length >= 8 && lowercaseRegex.test(newPassword) && uppercaseRegex.test(newPassword) && numberRegex.test(newPassword);
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('New password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, and one number.');
+                newPasswordInput.focus();
+            } else if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('New password and confirm password do not match.');
+                document.getElementById('confirm_password').focus();
+            }
+        });
+
+        // Initial button state check
+        updateButtonState();
+    });
+</script>
+
+
 <script>
     // Configure Toastr
     toastr.options = {
