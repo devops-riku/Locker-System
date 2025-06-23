@@ -158,6 +158,8 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
 
     db_session.commit()
 
+    UpdateLockerAvailability(user.assigned_locker, False)
+
     return {"message": "User updated successfully."}
 
 
