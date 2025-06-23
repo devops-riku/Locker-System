@@ -257,26 +257,27 @@ async def update_profile(request: Request, profile_data: ProfileUpdate):
 async def update_password(request: Request, password_data: PasswordUpdate):
     user_id = get_user_session(request).get('id')
     supabase = get_supabase_client()
+    user = get_user_by_id(user_id)
+
+    if not user:
+            raise HTTPException(status_code=404, detail="User not found")  
+    
+    try:
+            auth_response = supabase.auth.sign_in_with_password({
+            "email": user.email,
+            "password": password_data.current_password,
+        })
+
+    except Exception as e:
+        return JSONResponse(content={"message": f"Invalid Current Password"}, status_code=500)
 
     # Attempt to sign in the user
-    auth_response = supabase.auth.sign_in_with_password({
-        "email": user.email,
-        "password": user.current_password,
-    })
-    if not auth_response.user:
-        raise HTTPException(status_code=401, detail="Invalid current password")  
-    
-
-    try:
-        # Fetch the user from the database
-        user = get_user_by_id(user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")        
-        
-        
+          
+              
         # Get the user's email
-        user_email = user.email
+        user_email = user.email      
         
+
         # Search for the user in Supabase by email
         supabase_users = supabase.auth.admin.list_users()
         supabase_user = next((u for u in supabase_users if u.email == user_email), None)
@@ -321,6 +322,7 @@ async def update_pin(request: Request, pin_data: PinUpdate):
     
     try:
         user_cred = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).one()
+
         if not user_cred:
             raise HTTPException(status_code=404, detail="User credentials not found")
         

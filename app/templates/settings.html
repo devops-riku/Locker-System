@@ -757,7 +757,7 @@
             })
             .catch(function (error) {
                 console.error('Error updating password:', error);
-                toastr.error('Error updating password: ' + (error.response?.data?.detail || 'Unknown error'));
+                toastr.error((error.response?.data?.message || 'Unknown error'));
             })
             .finally(function () {
                 setLoading(submitButton, false);
