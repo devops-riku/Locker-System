@@ -257,13 +257,22 @@ async def update_profile(request: Request, profile_data: ProfileUpdate):
 async def update_password(request: Request, password_data: PasswordUpdate):
     user_id = get_user_session(request).get('id')
     supabase = get_supabase_client()
+
+    # Attempt to sign in the user
+    auth_response = supabase.auth.sign_in_with_password({
+        "email": user.email,
+        "password": user.current_password,
+    })
+    if not auth_response.user:
+        raise HTTPException(status_code=401, detail="Invalid current password")  
+    
+
     try:
         # Fetch the user from the database
         user = get_user_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="User not found")        
         
-        print(password_data)
         
         # Get the user's email
         user_email = user.email
