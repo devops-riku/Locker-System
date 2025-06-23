@@ -111,6 +111,7 @@ async def request_password_reset(request: Request, user: schemas.RequestEmailRes
 @router.post("/reset-password")
 async def reset_password(request: Request):
     data = await request.json()
+    current_password = data.get("current_password")
     access_token = data.get("access_token")
     new_password = data.get("new_password")
 
@@ -118,8 +119,18 @@ async def reset_password(request: Request):
         raise HTTPException(status_code=400, detail="Missing token or password")
     
     email_from_token = JWTDecode(access_token)
-    try:        
-        init_reset_password(access_token, new_password)
+    try: 
+        supabase = get_supabase_client()
+        
+        # Attempt to sign in the user
+        auth_response = supabase.auth.sign_in_with_password({
+            "email": email_from_token.get("email", None),
+            "password": current_password,
+        })
+        if not auth_response.user:
+            raise HTTPException(status_code=401, detail="Invalid current password")  
+             
+        # init_reset_password(access_token, new_password)
         if get_user_by_email(email_from_token.get("email", None)):
             log_history(user_id=get_user_by_email(email_from_token.get("email", None)).id, action="Update Email Password")
         return {"message": "Password updated successfully"}
