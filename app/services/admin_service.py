@@ -7,7 +7,9 @@ from app.models.database import *
 from app.models.models import *
 from sqlalchemy.orm import *
 from app.services.mqtt import mqtt_client
+from app.services.hash_password import hash_password
 import os
+
 load_dotenv()
 
 def get_user_session(request):
@@ -37,10 +39,17 @@ async def is_super_admin(request: Request) -> bool:
     return True
 
 
-def CreateUser(first_name=None, last_name=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False, is_active=True):
+def CreateUser(first_name=None, last_name=None, address=None, email=None, locker_number=None, rfid_serial_number=None, pin_number: str=None, created_by=None, is_super_admin=False, is_active=True, plain_password=None):
     try:
         get_locker_by_id = db_session.query(Locker).filter_by(id=locker_number).first()
-        user = User(first_name=first_name, last_name=last_name, address=address, email=email, created_by=created_by, is_super_admin=is_super_admin, is_active=is_active)
+        user = User(first_name=first_name, 
+                    last_name=last_name, 
+                    address=address, 
+                    email=email, 
+                    created_by=created_by, 
+                    is_super_admin=is_super_admin, 
+                    is_active=is_active,
+                    hashed_password=hash_password(plain_password))
         db_session.add(user)
         db_session.flush()
 

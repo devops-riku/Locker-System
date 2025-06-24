@@ -12,6 +12,7 @@ class User(Base):
     last_name = Column(String, nullable=True)
     address = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
+    hashed_password = Column(String, nullable=True)
     is_super_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -16,6 +16,9 @@ from app.models.models import *
 from app.services.mqtt import mqtt_client
 from datetime import datetime, timedelta
 
+from app.services.notification import notify_password_change, notify_pin_change
+from app.services.hash_password import verify_password
+
 
 
 load_dotenv()
@@ -259,48 +262,39 @@ async def update_password(request: Request, password_data: PasswordUpdate):
     supabase = get_supabase_client()
     user = get_user_by_id(user_id)
 
-    if not user:
-            raise HTTPException(status_code=404, detail="User not found")  
-    
-    try:
-            auth_response = supabase.auth.sign_in_with_password({
-            "email": user.email,
-            "password": password_data.current_password,
-        })
+    try:        
 
-    except Exception as e:
-        return JSONResponse(content={"message": f"Invalid Current Password"}, status_code=500)
-
-    # Attempt to sign in the user
-          
-              
-        # Get the user's email
-        user_email = user.email      
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         
+        if not verify_password(password_data.current_password, user.hashed_password):
+            return JSONResponse(content={"message": "Invalid current password"}, status_code=400)
+            
+        
+        
+        user_email = user.email
 
-        # Search for the user in Supabase by email
+        # Find user in Supabase
         supabase_users = supabase.auth.admin.list_users()
         supabase_user = next((u for u in supabase_users if u.email == user_email), None)
-        
+
         if not supabase_user:
             raise HTTPException(status_code=404, detail="User not found in Supabase")
-        
-        # Update password using Supabase
-        try:
-            response = supabase.auth.admin.update_user_by_id(
-                supabase_user.id,
-                {"password": password_data.new_password}
-            )
-            
-            # If we reach this point, the update was successful
-            # Log the password change action
-            log_history(user_id=user_id, action="Password updated")
-            
-            return JSONResponse(content={"message": "Password updated successfully"}, status_code=200)
-        except Exception as supabase_error:
-            # If there's an exception, it means the update failed
-            raise HTTPException(status_code=400, detail=str(supabase_error))
-        
+
+        # Update the password
+        supabase.auth.admin.update_user_by_id(
+            supabase_user.id,
+            {"password": password_data.new_password}
+        )
+
+        # Log password update
+        log_history(user_id=user_id, action="Password updated")
+
+        # Send password change email
+        notify_password_change(user_email)
+
+        return JSONResponse(content={"message": "Password updated successfully"}, status_code=200)
+
     except HTTPException as he:
         raise he
     except Exception as e:
@@ -312,6 +306,7 @@ async def update_password(request: Request, password_data: PasswordUpdate):
 @router.patch("/update-pin")
 async def update_pin(request: Request, pin_data: PinUpdate):
     user_id = get_user_session(request).get('id')
+    
  
     payload = {
         "user_id": user_id,
@@ -340,6 +335,8 @@ async def update_pin(request: Request, pin_data: PinUpdate):
         
         # Log the PIN update action
         log_history(user_id=user_id, action="Update PIN Number")
+        user = get_user_by_id(user_id)
+        notify_pin_change(user.email)
         
         return JSONResponse(content={"message": "PIN updated successfully"}, status_code=200)
     except HTTPException as he:

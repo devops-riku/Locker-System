@@ -74,7 +74,8 @@ async def register_user(user: schemas.RegisterUserRequest):
                 pin_number=user.pin_number,
                 created_by=None,
                 is_super_admin=False,
-                is_active=False
+                is_active=False,
+                plain_password=user.password
             )
         except Exception as e:
             print(f"Error in CreateUser: {str(e)}")
