@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from app.core.config import get_supabase_client, templates
 from app.models.schemas import *
-from app.services.admin_service import get_user_by_id, get_user_creds, get_user_creds_by_user_id, get_user_locker_info, get_user_session, is_super_admin
+from app.services.admin_service import get_user_by_id, get_user_creds, get_user_creds_by_user_id, get_user_locker_info, get_user_session, is_super_admin, update_user_hash_password
 from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
@@ -17,7 +17,7 @@ from app.services.mqtt import mqtt_client
 from datetime import datetime, timedelta
 
 from app.services.notification import notify_password_change, notify_pin_change
-from app.services.hash_password import verify_password
+from app.services.hash_password import hash_password, verify_password
 
 
 
@@ -292,6 +292,7 @@ async def update_password(request: Request, password_data: PasswordUpdate):
 
         # Send password change email
         notify_password_change(user_email)
+        update_user_hash_password(user_id, password_data.new_password)
 
         return JSONResponse(content={"message": "Password updated successfully"}, status_code=200)
 

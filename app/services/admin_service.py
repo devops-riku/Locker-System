@@ -120,6 +120,16 @@ def get_user_by_id(user_id):
     except Exception as e:
         db_session.rollback()
         raise e
+    
+
+def update_user_hash_password(user_id, plain_password):
+    try:
+        user = get_user_by_id(user_id)
+        user.hashed_password = hash_password(plain_password)
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        raise e
 
 
 def get_user_by_email(email):
