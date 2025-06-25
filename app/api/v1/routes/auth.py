@@ -120,7 +120,7 @@ async def reset_password(request: Request):
     
     email_from_token = JWTDecode(access_token)
     try:              
-        # init_reset_password(access_token, new_password)
+        init_reset_password(access_token, new_password)
         if get_user_by_email(email_from_token.get("email", None)):
             log_history(user_id=get_user_by_email(email_from_token.get("email", None)).id, action="Update Email Password")
         return {"message": "Password updated successfully"}
