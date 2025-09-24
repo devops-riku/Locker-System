@@ -6,7 +6,28 @@ import machine, gc, ntptime
 from keypad_matrix import Keypad
 from umqtt.simple import MQTTClient
 from i2c_lcd import I2cLcd
+from machine import Pin
+import time
 
+# ==== Buzzer Setup ====
+BUZZER_PIN = 32                 
+# For 5V active buzzer module: HIGH = ON, LOW = OFF (most common)
+# If your buzzer is opposite, change BUZZER_ACTIVE_LEVEL to 0
+BUZZER_ACTIVE_LEVEL = 1         # Active HIGH for 5V buzzer module
+buzzer = Pin(BUZZER_PIN, Pin.OUT, value=0)  # Start with buzzer OFF (LOW)
+
+def buzz(n=1, on_ms=120, off_ms=90):
+    """Buzzer function for 5V active buzzer module"""
+    for _ in range(n):
+        buzzer.value(BUZZER_ACTIVE_LEVEL)    # Turn buzzer ON (HIGH)
+        time.sleep_ms(on_ms)
+        buzzer.value(1 - BUZZER_ACTIVE_LEVEL)  # Turn buzzer OFF (LOW)
+        if _ < n - 1:  # Don't wait after the last buzz
+            time.sleep_ms(off_ms)
+
+# Initial test beep after a small delay to ensure proper initialization
+time.sleep_ms(100)
+buzz(1, 500)  # Single long beep on startup
 
 # ==== Configuration ====
 RELAY_GPIO_MAP = {15: Pin(15, Pin.OUT), 4: Pin(4, Pin.OUT)}
@@ -22,62 +43,201 @@ MQTT_USERNAME = "rikumqtt"
 MQTT_PASSWORD = "@Riku01234"
 MQTT_TOPIC_SUB = b"locker/control"
 MQTT_TOPIC_PUB = b"locker/status"
+MQTT_TOPIC_VALIDATE_PIN = b"locker/validate_pin"
+MQTT_TOPIC_LOCKDOWN = b"locker/lockdown"
+
 mqtt_client = None
 pin_buffer = ""
 SERVER_URL = "https://locker-system.up.railway.app"
-
-LOCK_DURATION = 2 * 60
+current_display = None
 MAX_FAILED_ATTEMPTS = 3
+LOCK_DURATION = 120  # 2 minutes in seconds
 failed_pin_attempts = 0
 locked_until_time = 0
 
 # ==== LCD Setup ====
-i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
+i2c = I2C(0, scl=Pin(16), sda=Pin(17), freq=400000)
 lcd = None
 try:
     lcd_addr = i2c.scan()[0]
     lcd = I2cLcd(i2c, lcd_addr, 4, 20)
     lcd.clear()
-    lcd.putstr("Input Pin:")
+    lcd.putstr("Initializing...")
 except:
     print("LCD init failed")
 
 for relay in RELAY_GPIO_MAP.values():
     relay.value(1)
 
-# ==== Lock Function for Failed Attempts ====
+# ==== Lockout Handling ====
 def is_system_locked():
     return time.time() < locked_until_time
 
+def handle_pin_validation(payload):
+    global locked_until_time
+    try:
+        data = json.loads(payload)
+        user_id = str(data.get("user_id"))
+        duration = data.get("lockout_duration")
+        source = data.get("source", "web")
+
+        print(f"Received lockout from {source} - duration: {duration}")
+
+        # If duration is a number (seconds), use it directly
+        if isinstance(duration, (int, float)):
+            locked_until_time = time.time() + duration
+            print(f"System locked for {duration} seconds")
+        else:
+            # If duration is a formatted time string, ignore it and use local lockout
+            print("Ignoring server duration, using local 2-minute lockout")
+            locked_until_time = time.time() + LOCK_DURATION  # Use local 2-minute lockout
+
+        print(f"Lockout for user {user_id} - locked until timestamp: {locked_until_time}")
+
+        # Update the display
+        if lcd:
+            lcd.clear()
+            lcd.putstr(f"System is Locked!")
+            lcd.move_to(0, 1)
+            if source == "web":
+                lcd.putstr(f"Web initiated lock")
+            else:
+                lcd.putstr(f"Try again later!!")
+
+        buzz(3, 200, 200)  # Three warning beeps
+
+        # Start countdown display thread if not hardware initiated
+        if source == "web":
+            _thread.start_new_thread(show_lockout_countdown, ())
+
+    except Exception as e:
+        print("Error handling pin validation:", e)
+
 def record_pin_failure():
     global failed_pin_attempts, locked_until_time
+
     failed_pin_attempts += 1
-    remaining = MAX_FAILED_ATTEMPTS - failed_pin_attempts
+    remaining_attempts = MAX_FAILED_ATTEMPTS - failed_pin_attempts
+    
+    buzz(2, 150, 100)  # Two error beeps
 
     if failed_pin_attempts >= MAX_FAILED_ATTEMPTS:
+        # Lock for exactly 2 minutes (120 seconds)
         locked_until_time = time.time() + LOCK_DURATION
-        failed_pin_attempts = 0
-        print(f"🔒 System locked for {LOCK_DURATION // 60} mins due to too many PIN failures.")
-        _thread.start_new_thread(show_lockout_timer, ())
-    else:
-        print(f"❌ Wrong PIN. {remaining} attempts left.")
-        lcd.clear(); lcd.putstr(f"Wrong PIN\nAttempts Left: {remaining}")
         
-def show_lockout_timer():
-    global locked_until_time
-    while is_system_locked():
-        remaining = int(locked_until_time - time.time())
-        lcd.clear()
-        lcd.putstr("System Locked!\nRetry in: {}s".format(remaining))
-        time.sleep(1)
+        print(f"🔒 System locked for {LOCK_DURATION} seconds (2 minutes)")
 
-    lcd.clear()
-    lcd.putstr("Input Pin:")
+        # Send MQTT notification with local lock duration to both validation and lockdown topics
+        try:
+            lockers = load_auth()
+            for user_id, locker in lockers.items():
+                payload = json.dumps({
+                    "type": "hardware_lockdown",
+                    "user_id": int(user_id),
+                    "lockout_seconds": LOCK_DURATION,
+                    "lockout_duration": LOCK_DURATION,  # For backwards compatibility
+                    "end_time": locked_until_time,
+                    "source": "hardware",
+                    "message": f"System locked for {LOCK_DURATION} seconds due to failed PIN attempts"
+                })
+                if mqtt_client:
+                    # Send to both topics to ensure web system receives it
+                    mqtt_client.publish("locker/validate_pin", payload)
+                    mqtt_client.publish("locker/lockdown", payload)
+                    print("📤 Hardware lockdown info sent via MQTT:", payload)
+        except Exception as e:
+            print("❌ Failed to publish hardware lockdown info:", e)
+
+        failed_pin_attempts = 0
+
+        if lcd:
+            lcd.clear()
+            lcd.putstr("Too many wrong PINs")
+            lcd.move_to(0, 1)
+            lcd.putstr("Locked for 2 mins")
+        
+        buzz(5, 100, 100)  # Five rapid warning beeps for lockout
+
+        _thread.start_new_thread(show_lockout_countdown, ())
+
+    else:
+        print(f"❌ Wrong PIN. {remaining_attempts} attempts left")
+        if lcd:
+            lcd.clear()
+            lcd.putstr(f"Wrong PIN")
+            lcd.move_to(0, 1)
+            lcd.putstr(f"Attempts left: {remaining_attempts}")
+        time.sleep(2)
+        show_pin_entry_display()
+
+def show_lockout_countdown():
+    """Show countdown during lockout period"""
+    while is_system_locked():
+        remaining_time = int(locked_until_time - time.time())
+        
+        # Ensure we don't show negative time
+        if remaining_time <= 0:
+            break
+            
+        mins, secs = divmod(remaining_time, 60)
+        
+        if lcd:
+            lcd.clear()
+            lcd.putstr(f"System Locked")
+            lcd.move_to(0, 1)
+            lcd.putstr(f"Time left: {mins:02d}:{secs:02d}")
+        
+        time.sleep(1)
+    
+    # When lockout period is over
+    print("🔓 Lockout period expired")
+    if lcd:
+        lcd.clear()
+        lcd.putstr("Lock expired")
+        lcd.move_to(0, 1)
+        lcd.putstr("You may retry now")
+    buzz(2, 200, 200)  # Two beeps to indicate unlock
+    time.sleep(2)
+    show_default_display()
+
+# ==== Additional function to manually reset lockout (for testing/emergency) ====
+def reset_lockout():
+    """Emergency function to reset lockout - can be called via MQTT or web interface"""
+    global locked_until_time, failed_pin_attempts
+    locked_until_time = 0
+    failed_pin_attempts = 0
+    print("🔓 Lockout manually reset")
+    if lcd:
+        lcd.clear()
+        lcd.putstr("Lockout Reset")
+        time.sleep(1)
+        show_default_display()
+    buzz(1, 500)  # Single long beep for reset confirmation
+
+def show_default_display():
+    if lcd:
+        lcd.clear()
+        lcd.putstr("Scan RFID:")
+        lcd.move_to(0, 1)
+        lcd.putstr("Input PIN:")
+
+def show_pin_entry_display():
+    if lcd:
+        lcd.clear()
+        lcd.putstr("Scan RFID:")
+        lcd.move_to(0, 1)
+        lcd.putstr("Input PIN:")
+        if pin_buffer:
+            lcd.move_to(0, 2)
+            lcd.putstr("*" * len(pin_buffer))
 
 # ==== File Utils ====
 def file_exists(path):
-    try: uos.stat(path); return True
-    except: return False
+    try:
+        uos.stat(path)
+        return True
+    except:
+        return False
 
 def load_auth():
     try:
@@ -112,23 +272,38 @@ def connect_to_wifi():
         return False
 
     print("Connecting to WiFi:", ssid)
-    lcd.clear(); lcd.putstr("Connecting WiFi")
+    if lcd:
+        lcd.clear()
+        lcd.putstr("Connecting WiFi")
+
     try:
         sta.connect(ssid, password)
     except:
-        lcd.clear(); lcd.putstr("WiFi Connect Err")
+        if lcd:
+            lcd.clear()
+            lcd.putstr("WiFi Connect Err")
         return False
 
     for _ in range(15):
         if sta.isconnected():
             ip = sta.ifconfig()[0]
             print("WiFi Connected:", ip)
-            lcd.clear(); lcd.putstr(f"Connected:\n{ip}")
+            if lcd:
+                lcd.clear()
+                lcd.putstr(f"Connected:")
+                lcd.move_to(0, 1)
+                lcd.putstr(f"{ip}")
+            buzz(1, 300)  # Success beep for WiFi connection
+            time.sleep(2)
+            show_default_display()
             return True
         time.sleep(1)
 
     print("WiFi failed")
-    lcd.clear(); lcd.putstr("WiFi Failed")
+    if lcd:
+        lcd.clear()
+        lcd.putstr("WiFi Failed")
+    buzz(3, 200, 200)  # Error beeps for WiFi failure
     return False
 
 def sync_time():
@@ -147,23 +322,29 @@ def start_ap():
     ap.active(True)
     ap.ifconfig(('192.168.4.1', '255.255.255.0', '192.168.4.1', '8.8.8.8'))
     ap.config(essid=AP_SSID, password=AP_PASSWORD, authmode=3)
-    lcd.clear(); lcd.putstr("AP Mode Active \n192.168.4.1")
-    
-
+    if lcd:
+        lcd.clear()
+        lcd.putstr("AP Mode Active")
+        lcd.move_to(0, 1)
+        lcd.putstr("192.168.4.1")
 
 # ==== Locker ====
 def unlock_locker(relay_pin):
     relay = RELAY_GPIO_MAP.get(relay_pin)
-    if not relay: return
+    if not relay:
+        return
     relay.value(0)
-    lcd.clear(); lcd.putstr(f"Unlocked Locker")
+    buzz(1, 300)  # Success beep for unlock
+    if lcd:
+        lcd.clear()
+        lcd.putstr(f"Locker Unlocked")
     time.sleep(UNLOCK_DURATION)
     relay.value(1)
-    lcd.clear(); lcd.putstr("Input Pin:")
+    show_default_display()
     try:
         mqtt_client.publish(MQTT_TOPIC_PUB, f"unlocked:{relay_pin}".encode())
-    except: pass
-    
+    except:
+        pass
 
 # ==== Server Log ====
 def add_history(user_id, action):
@@ -181,7 +362,6 @@ def add_history(user_id, action):
             print("❌ MQTT publish failed:", e)
     else:
         print("⚠️ MQTT not connected")
-
 
 # ==== RFID ====
 spi = SPI(1, baudrate=1000000, polarity=0, phase=0, sck=Pin(18), mosi=Pin(23), miso=Pin(19))
@@ -201,27 +381,45 @@ def check_rfid_once():
                     unlock_locker(locker.get("relay_pin", 15))
                     add_history(user_id=user_id, action="Locker Unlocked by RFID")
                     return
-            lcd.clear(); lcd.putstr("Access Denied")
-            
+            if lcd:
+                lcd.clear()
+                lcd.putstr("Access Denied")
+                buzz(3, 150, 100)  # Three error beeps for access denied
+                time.sleep(2)
+                show_pin_entry_display()
+
 # ==== Keypad ====
 keypad = Keypad(
-    keys=[["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["*", "0", "#"]],
-    row_pins=[13, 12, 14, 27], col_pins=[26, 25, 33]
+    keys=[["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["*", "0", "#"]], 
+    row_pins=[13, 12, 14, 27], col_pins=[25, 26, 33]
 )
 
 def check_keypad_once():
-    global pin_buffer, failed_pin_attempts
-
+    global pin_buffer, failed_pin_attempts, current_display
     if is_system_locked():
-        print("⛔ Keypad access is locked.")
-        time.sleep(1)
+        if current_display != "locked":
+            lcd.clear()
+            lcd.putstr("Keypad is locked")
+            current_display = "locked"
+        time.sleep(0.1)
         return
+    
+    if current_display != "default":
+        lcd.clear()
+        lcd.putstr("Scan RFID:")
+        lcd.move_to(0, 1)
+        lcd.putstr("Input PIN:")
+        current_display = "default"
 
     lockers = load_auth()
     key = keypad.get_key()
     if key and key not in ['*', '#']:
         pin_buffer += key
-        lcd.move_to(0, 1); lcd.putstr("*" * len(pin_buffer))
+        buzz(1, 30)  # Short beep for key press feedback
+        print(f"Entered PIN: {pin_buffer}") 
+        if lcd:
+            lcd.move_to(0, 2)
+            lcd.putstr("*" * len(pin_buffer))
 
         if len(pin_buffer) == 4:
             for user_id, locker in lockers.items():
@@ -229,56 +427,69 @@ def check_keypad_once():
                     unlock_locker(locker.get("relay_pin", 15))
                     add_history(user_id=user_id, action="Locker Unlocked by PIN")
                     pin_buffer = ""
-                    failed_pin_attempts = 0  # ✅ reset on success
+                    failed_pin_attempts = 0
+                    show_default_display()
                     return
-
             record_pin_failure()
-            time.sleep(2)
             pin_buffer = ""
-            lcd.clear(); lcd.putstr("Input Pin:")
+            show_pin_entry_display()
 
 # ==== MQTT ====
 def connect_mqtt():
     global mqtt_client
-
     def sub_cb(topic, msg):
         print("📩 MQTT:", topic, msg)
-
-        if is_system_locked():
-            remaining = int(locked_until_time - time.time())
-            print("⛔ System is locked. Remaining: {}s".format(remaining))
-            try:
-                if mqtt_client:
-                    mqtt_client.publish(MQTT_TOPIC_PUB, json.dumps({
-                        "type": "lock_alert",
-                        "message": "MQTT command rejected due to system lock",
-                        "remaining": remaining
-                    }))
-                    print("📤 MQTT: Lock alert sent")
-            except Exception as e:
-                print("❌ MQTT lock alert failed:", e)
-            return
 
         try:
             payload = msg.decode()
             config = json.loads(payload)
-            lockers = load_auth()
+            
+            # Handle reset lockout command
+            if config.get("command") == "reset_lockout":
+                print("🔓 Received lockout reset command")
+                reset_lockout()
+                if mqtt_client:
+                    mqtt_client.publish(MQTT_TOPIC_PUB, json.dumps({
+                        "type": "lockout_reset",
+                        "message": "Lockout has been reset",
+                        "timestamp": time.time()
+                    }))
+                return
 
-            # ==== Unlock Command ====
-            if config.get("command") == "unlock" and "user_id" in config:
+            # Check if system is locked for other commands
+            if is_system_locked() and config.get("command") != "reset_lockout":
+                remaining = int(locked_until_time - time.time())
+                print("⛔ System is locked. Remaining: {}s".format(remaining))
+                try:
+                    if mqtt_client:
+                        mqtt_client.publish(MQTT_TOPIC_PUB, json.dumps({
+                            "type": "lock_alert",
+                            "message": "MQTT command rejected due to system lock",
+                            "remaining": remaining
+                        }))
+                        print("📤 MQTT: Lock alert sent")
+                except Exception as e:
+                    print("❌ MQTT lock alert failed:", e)
+                return
+
+            lockers = load_auth()
+            print(payload)
+
+            if topic == MQTT_TOPIC_VALIDATE_PIN or topic == MQTT_TOPIC_LOCKDOWN:
+                handle_pin_validation(payload)
+
+            elif config.get("command") == "unlock" and "user_id" in config:
                 user_id = str(config["user_id"])
                 if user_id in lockers:
                     locker = lockers[user_id]
                     if locker.get("is_active") and str(locker.get('rfid')):
-                        relay_pin = locker.get("relay_pin", 15)
-                        unlock_locker(relay_pin)
+                        unlock_locker(locker.get("relay_pin", 15))
                         print(f"✅ Unlocked locker for user {user_id}")
                     else:
                         print(f"❌ User {user_id}'s locker is not valid")
                 else:
                     print(f"❌ Locker config not found for user {user_id}")
 
-            # ==== Config Save/Update ====
             elif "user_id" in config and "pin" in config and "rfid" in config:
                 user_id = str(config["user_id"])
                 new_data = {
@@ -291,7 +502,6 @@ def connect_mqtt():
                 save_auth(lockers)
                 print(f"✅ Config saved/updated for user {user_id}")
 
-            # ==== Delete ====
             elif "delete" in config and "user_id" in config:
                 user_id = str(config["user_id"])
                 if user_id in lockers:
@@ -304,7 +514,6 @@ def connect_mqtt():
         except Exception as e:
             print("❌ MQTT error:", e)
 
-    # ==== MQTT Client Init ====
     try:
         mqtt_client = MQTTClient(client_id=MQTT_CLIENT_ID, server=MQTT_BROKER, port=MQTT_PORT,
                                  user=MQTT_USERNAME, password=MQTT_PASSWORD, ssl=True,
@@ -312,26 +521,31 @@ def connect_mqtt():
         mqtt_client.set_callback(sub_cb)
         mqtt_client.connect()
         mqtt_client.subscribe(MQTT_TOPIC_SUB)
-        lcd.clear()
-        lcd.putstr("MQTT Connected")
-        print("✅ MQTT connected")
+        mqtt_client.subscribe(MQTT_TOPIC_VALIDATE_PIN)
+        mqtt_client.subscribe(MQTT_TOPIC_LOCKDOWN)
+        if lcd:
+            lcd.clear()
+            lcd.putstr("MQTT Connected")
+            buzz(2, 100, 100)  # Two quick beeps for MQTT connection
+            time.sleep(2)
+            show_default_display()
+        print("✅ MQTT connected")	
     except Exception as e:
         print("MQTT connect failed:", e)
         mqtt_client = None
-
 
 # ==== Unified Loop ====
 def unified_loop():
     global mqtt_client
     retry = 0
     last_ping = time.time()
-
     while True:
         check_rfid_once()
         check_keypad_once()
 
         if not network.WLAN(network.STA_IF).isconnected():
-            connect_to_wifi(); sync_time()
+            connect_to_wifi()
+            sync_time()
 
         if mqtt_client:
             try:
@@ -435,7 +649,6 @@ def index(req):
 </html>
 """, headers={'Content-Type': 'text/html'})
 
-
 @app.route('/configure', methods=['POST'])
 def configure(req):
     ssid = req.form['ssid']
@@ -455,12 +668,21 @@ def unlock(req):
     except:
         return {"status": "error"}
 
+@app.route('/reset_lockout', methods=['POST'])
+def web_reset_lockout(req):
+    try:
+        reset_lockout()
+        return {"status": "lockout_reset", "message": "System lockout has been reset"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # ==== Start ====
 if connect_to_wifi():
-    sync_time(); connect_mqtt()
+    sync_time()
+    connect_mqtt()
 else:
     start_ap()
 
+show_default_display()
 _thread.start_new_thread(unified_loop, ())
 app.run(port=80)
-
