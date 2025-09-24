@@ -96,20 +96,46 @@
         let remainingAttempts = 3;
         let user_id = "{{ request.session.get('user', {}).get('id', '') }}";
 
-        function startCooldown(seconds) {
+        // Check for existing countdown on page load
+        function checkExistingCountdown() {
+            const countdownData = localStorage.getItem('lockerCountdown');
+            if (countdownData) {
+                const data = JSON.parse(countdownData);
+                const now = Date.now();
+                const timeLeft = Math.ceil((data.endTime - now) / 1000);
+
+                if (timeLeft > 0) {
+                    startCooldown(timeLeft, data.totalSeconds);
+                } else {
+                    localStorage.removeItem('lockerCountdown');
+                }
+            }
+        }
+
+        function startCooldown(seconds, totalSeconds = null) {
+            // Store countdown data in localStorage
+            const endTime = Date.now() + (seconds * 1000);
+            localStorage.setItem('lockerCountdown', JSON.stringify({
+                endTime: endTime,
+                totalSeconds: totalSeconds || seconds
+            }));
+
             $lock.prop("disabled", true);
             $pinInput.prop("disabled", true);
             $countdown.text(`Please wait ${seconds} seconds before trying again`);
             $progressContainer.show();
 
             let remaining = seconds;
+            const originalTotal = totalSeconds || seconds;
+
             cooldownInterval = setInterval(() => {
                 remaining--;
                 $countdown.text(`Please wait ${remaining} seconds before trying again`);
-                $progressBar.css("width", (remaining / seconds) * 100 + "%");
+                $progressBar.css("width", (remaining / originalTotal) * 100 + "%");
 
                 if (remaining <= 0) {
                     clearInterval(cooldownInterval);
+                    localStorage.removeItem('lockerCountdown');
                     $lock.prop("disabled", false);
                     $pinInput.prop("disabled", false).val('');
                     $countdown.text("");
@@ -118,6 +144,84 @@
                 }
             }, 1000);
         }
+
+        // Check server lockdown status
+        function checkServerLockdownStatus() {
+            axios.get('/lockdown-status')
+                .then(response => {
+                    const lockdownStatus = response.data;
+
+                    if (lockdownStatus.is_locked) {
+                        const serverEndTime = new Date(lockdownStatus.end_time).getTime();
+                        const serverRemainingSeconds = Math.ceil((serverEndTime - Date.now()) / 1000);
+
+                        if (serverRemainingSeconds > 0) {
+                            // Server lockdown is active - override local countdown
+                            const lockdownSource = lockdownStatus.source || 'system';
+
+                            // Clear any existing local countdown
+                            if (cooldownInterval) {
+                                clearInterval(cooldownInterval);
+                            }
+                            localStorage.removeItem('lockerCountdown');
+
+                            // Start countdown with server time
+                            startServerLockdown(serverRemainingSeconds, lockdownSource);
+                        }
+                    } else {
+                        // No server lockdown - check if we need to clear local countdown
+                        if (cooldownInterval && $countdown.text().includes('system')) {
+                            clearInterval(cooldownInterval);
+                            localStorage.removeItem('lockerCountdown');
+                            $lock.prop("disabled", false);
+                            $pinInput.prop("disabled", false).val('');
+                            $countdown.text("");
+                            $progressContainer.hide();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('Could not fetch lockdown status:', error);
+                });
+        }
+
+        function startServerLockdown(seconds, source) {
+            $lock.prop("disabled", true);
+            $pinInput.prop("disabled", true);
+            $progressContainer.show();
+
+            let remaining = seconds;
+            const originalTotal = seconds;
+
+            function updateServerCountdown() {
+                $countdown.text(`System locked (${source}) - ${remaining} seconds remaining`);
+                $progressBar.css("width", (remaining / originalTotal) * 100 + "%");
+
+                if (remaining <= 0) {
+                    clearInterval(cooldownInterval);
+                    $lock.prop("disabled", false);
+                    $pinInput.prop("disabled", false).val('');
+                    $countdown.text("");
+                    $progressContainer.hide();
+                    return;
+                }
+
+                remaining--;
+            }
+
+            // Update immediately
+            updateServerCountdown();
+
+            // Set interval for future updates
+            cooldownInterval = setInterval(updateServerCountdown, 1000);
+        }
+
+        // Check for existing countdown when page loads
+        checkExistingCountdown();
+
+        // Check server lockdown status every 5 seconds
+        checkServerLockdownStatus();
+        setInterval(checkServerLockdownStatus, 5000);
 
         $pinInput.on('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '');

@@ -13,7 +13,7 @@ from app.services.admin_service import get_user_by_id, get_user_creds, get_user_
 from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
-from app.services.mqtt import mqtt_client
+from app.services.mqtt import mqtt_client, is_globally_locked, get_lockdown_status, set_web_lockdown
 from datetime import datetime, timedelta
 
 from app.services.notification import notify_password_change, notify_pin_change
@@ -111,7 +111,7 @@ def publish_lockout(request: PinLockoutRequest):
     try:
         mqtt_payload = {
             "user_id": str(request.user_id),
-            "lockout_duration": 120  
+            "lockout_duration": 120
         }
         mqtt_client.publish("locker/validate_pin", json.dumps(mqtt_payload))
 
@@ -119,14 +119,34 @@ def publish_lockout(request: PinLockoutRequest):
     except Exception as e:
         print("Error publishing to MQTT:", e)
 
+@router.get("/lockdown-status")
+def get_lockdown_status_endpoint():
+    """Get current system lockdown status"""
+    return get_lockdown_status()
+
 failed_attempts = {} 
 
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
     user_id = pin_request.user_id
+
+    # Check global lockdown first
+    if is_globally_locked():
+        lockdown_status = get_lockdown_status()
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "valid": False,
+                "message": f"System is locked ({lockdown_status['source']}). Please try again later",
+                "cooldown": lockdown_status["remaining_seconds"],
+                "remaining_attempts": 0,
+                "lockdown_source": lockdown_status["source"]
+            }
+        )
+
     user_cred = get_user_creds_by_user_id(user_id)
 
-    # Check cooldown
+    # Check individual user cooldown
     if user_cred and user_cred.attempt_duration and datetime.now() < user_cred.attempt_duration:
         remaining_time = (user_cred.attempt_duration - datetime.now()).seconds
         raise HTTPException(
@@ -175,11 +195,14 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
         lockout_time = datetime.now() + timedelta(seconds=120)
         failed_attempts[user_id]['lockout_time'] = lockout_time
 
-        # You can also update DB cooldown here if needed
+        # Set global lockdown from web
+        set_web_lockdown(user_id, 120)
+
+        # Update individual user DB cooldown
         if user_cred:
             user_cred.attempt_duration = lockout_time
             try:
-                db_session.commit()  # assuming db_session is accessible
+                db_session.commit()
             except Exception as e:
                 db_session.rollback()
                 print("DB commit error:", e)
@@ -197,9 +220,10 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
             status_code=400,
             detail={
                 "valid": False,
-                "message": "Too many failed attempts. Please try again in 2 minutes",
+                "message": "Too many failed attempts. System locked for 2 minutes",
                 "cooldown": 120,
-                "remaining_attempts": 0
+                "remaining_attempts": 0,
+                "lockdown_source": "web"
             }
         )
 
