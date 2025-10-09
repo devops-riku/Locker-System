@@ -13,7 +13,7 @@ from app.services.auth_service import create_auth_user, delete_auth_user
 from datetime import datetime
 import pytz
 from app.services.history_logs import log_history
-from app.services.mqtt import mqtt_client
+from app.services.mqtt import mqtt_client, publish_credential_update
 
 from app.services.utc_converter import utc_to_ph
 
@@ -146,7 +146,7 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
         raise HTTPException(status_code=404, detail="User credentials not found")
 
     user_credentials.locker_id = user.assigned_locker
-    
+
     # Update PIN and RFID serial number
     if user.pin_number:
         user_credentials.pin_number = user.pin_number.strip()
@@ -159,6 +159,16 @@ async def update_user(request: Request, user_id: int, user: UpdateUserRequest):
     db_session.commit()
 
     UpdateLockerAvailability(user.assigned_locker, False)
+
+    # Send credential update to ESP32 after database commit
+    relay_pin = user_credentials.locker.relay_pin if user_credentials.locker else 15
+    publish_credential_update(
+        user_id=user_id,
+        pin=user_credentials.pin_number,
+        rfid=user_credentials.rfid_serial_number,
+        relay_pin=relay_pin,
+        is_active=user_credentials.is_active
+    )
 
     return {"message": "User updated successfully."}
 

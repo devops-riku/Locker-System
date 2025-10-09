@@ -38,7 +38,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(MQTT_TOPIC_PUB)
         client.subscribe(MQTT_TOPIC_VALIDATE_PIN)
         client.subscribe(MQTT_TOPIC_LOCKDOWN)
-        print(f"📡 Subscribed to {MQTT_TOPIC_PUB}, {MQTT_TOPIC_VALIDATE_PIN}, and {MQTT_TOPIC_LOCKDOWN}")
+        client.subscribe("locker/sync_request")
+        print(f"📡 Subscribed to {MQTT_TOPIC_PUB}, {MQTT_TOPIC_VALIDATE_PIN}, {MQTT_TOPIC_LOCKDOWN}, and locker/sync_request")
     else:
         print(f"⚠️ MQTT connect failed with code {rc}")
 
@@ -57,6 +58,9 @@ def on_message(client, userdata, msg):
             handle_pin_validation(payload)
         elif msg.topic == MQTT_TOPIC_LOCKDOWN:
             handle_hardware_lockdown(payload)
+        elif msg.topic == "locker/sync_request":
+            # Handle credential sync request from ESP32
+            handle_credential_sync_request(payload)
         elif payload.get("type") == "history":
             user_id = payload.get("user_id")
             action = payload.get("action")
@@ -175,6 +179,57 @@ def set_web_lockdown(user_id, duration_seconds=120):
     except Exception as e:
         print(f"❌ Failed to send web lockdown to hardware: {e}")
 
+def handle_credential_sync_request(payload):
+    """Send all active user credentials to ESP32"""
+    try:
+        # Get all active user credentials from database
+        from app.models.models import User
+        active_users = db_session.query(User).filter(User.is_active == True).all()
+
+        credentials = []
+        for user in active_users:
+            if user.credentials:
+                for cred in user.credentials:
+                    if cred.is_active and cred.locker:
+                        credentials.append({
+                            "user_id": user.id,
+                            "pin": cred.pin_number,
+                            "rfid": cred.rfid_serial_number or "",
+                            "relay_pin": cred.locker.relay_pin,
+                            "is_active": cred.is_active
+                        })
+
+        sync_payload = {
+            "type": "credential_sync",
+            "credentials": credentials,
+            "timestamp": time.time()
+        }
+
+        mqtt_client.publish("locker/sync_response", json.dumps(sync_payload))
+        print(f"📤 Sent {len(credentials)} credentials to ESP32")
+
+    except Exception as e:
+        print(f"❌ Failed to sync credentials: {e}")
+
+def publish_credential_update(user_id, pin, rfid, relay_pin, is_active=True):
+    """Publish credential update for a single user to ESP32"""
+    try:
+        payload = {
+            "type": "credential_update",
+            "user_id": user_id,
+            "pin": pin,
+            "rfid": rfid or "",
+            "relay_pin": relay_pin,
+            "is_active": is_active,
+            "timestamp": time.time()
+        }
+
+        mqtt_client.publish(MQTT_TOPIC, json.dumps(payload))
+        print(f"📤 Credential update sent for user {user_id}")
+
+    except Exception as e:
+        print(f"❌ Failed to publish credential update: {e}")
+
 def reconnect_mqtt():
     while True:
         try:
@@ -190,3 +245,7 @@ def mqtt_setup():
     mqtt_client.on_disconnect = on_disconnect
     mqtt_client.on_message = on_message
     reconnect_mqtt()
+
+def get_mqtt_client():
+    """Get the MQTT client instance"""
+    return mqtt_client

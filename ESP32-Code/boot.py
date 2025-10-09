@@ -250,6 +250,16 @@ def save_auth(lockers):
     with open(AUTH_CONFIG_PATH, "w") as f:
         json.dump(lockers, f)
 
+def request_credential_sync():
+    """Request latest credentials from server when online"""
+    if mqtt_client:
+        try:
+            payload = json.dumps({"command": "sync_credentials"})
+            mqtt_client.publish("locker/sync_request", payload)
+            print("📤 Credential sync requested from server")
+        except Exception as e:
+            print("❌ Failed to request credential sync:", e)
+
 # ==== WiFi ====
 def connect_to_wifi():
     sta = network.WLAN(network.STA_IF)
@@ -443,7 +453,7 @@ def connect_mqtt():
         try:
             payload = msg.decode()
             config = json.loads(payload)
-            
+
             # Handle reset lockout command
             if config.get("command") == "reset_lockout":
                 print("🔓 Received lockout reset command")
@@ -490,13 +500,53 @@ def connect_mqtt():
                 else:
                     print(f"❌ Locker config not found for user {user_id}")
 
+            elif config.get("type") == "credential_update" and "user_id" in config:
+                # Handle single user credential update
+                user_id = str(config["user_id"])
+                new_data = {
+                    "pin": config.get("pin"),
+                    "rfid": config.get("rfid"),
+                    "relay_pin": config.get("relay_pin", 15),
+                    "is_active": config.get("is_active", True),
+                    "updated_at": time.time()
+                }
+                lockers[user_id] = new_data
+                save_auth(lockers)
+                print(f"✅ Credentials updated for user {user_id}: PIN={config.get('pin')}, RFID={config.get('rfid')}")
+
+                # Send acknowledgment
+                if mqtt_client:
+                    mqtt_client.publish(MQTT_TOPIC_PUB, json.dumps({
+                        "type": "credential_update_ack",
+                        "user_id": user_id,
+                        "timestamp": time.time()
+                    }))
+
+            elif config.get("type") == "credential_sync" and "credentials" in config:
+                # Handle full credential sync from server
+                print("📥 Receiving full credential sync from server")
+                lockers.clear()
+                for cred in config["credentials"]:
+                    user_id = str(cred["user_id"])
+                    lockers[user_id] = {
+                        "pin": cred.get("pin"),
+                        "rfid": cred.get("rfid"),
+                        "relay_pin": cred.get("relay_pin", 15),
+                        "is_active": cred.get("is_active", True),
+                        "updated_at": time.time()
+                    }
+                save_auth(lockers)
+                print(f"✅ Synced {len(lockers)} user credentials from server")
+
             elif "user_id" in config and "pin" in config and "rfid" in config:
+                # Legacy format support
                 user_id = str(config["user_id"])
                 new_data = {
                     "pin": config["pin"],
                     "rfid": config["rfid"],
                     "relay_pin": config.get("relay_pin", 15),
-                    "is_active": config.get("is_active", True)
+                    "is_active": config.get("is_active", True),
+                    "updated_at": time.time()
                 }
                 lockers[user_id] = new_data
                 save_auth(lockers)
@@ -523,13 +573,20 @@ def connect_mqtt():
         mqtt_client.subscribe(MQTT_TOPIC_SUB)
         mqtt_client.subscribe(MQTT_TOPIC_VALIDATE_PIN)
         mqtt_client.subscribe(MQTT_TOPIC_LOCKDOWN)
+        mqtt_client.subscribe(b"locker/sync_response")
         if lcd:
             lcd.clear()
             lcd.putstr("MQTT Connected")
             buzz(2, 100, 100)  # Two quick beeps for MQTT connection
-            time.sleep(2)
-            show_default_display()
-        print("✅ MQTT connected")	
+            time.sleep(1)
+            lcd.clear()
+            lcd.putstr("Syncing credentials...")
+        print("✅ MQTT connected")
+
+        # Request credential sync on connect
+        request_credential_sync()
+        time.sleep(2)
+        show_default_display()
     except Exception as e:
         print("MQTT connect failed:", e)
         mqtt_client = None

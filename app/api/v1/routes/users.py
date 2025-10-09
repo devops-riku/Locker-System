@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import time
 import traceback
@@ -13,7 +14,7 @@ from app.services.admin_service import get_user_by_id, get_user_creds, get_user_
 from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
-from app.services.mqtt import mqtt_client, is_globally_locked, get_lockdown_status, set_web_lockdown
+from app.services.mqtt import mqtt_client, is_globally_locked, get_lockdown_status, set_web_lockdown, publish_credential_update
 from datetime import datetime, timedelta
 
 from app.services.notification import notify_password_change, notify_pin_change
@@ -331,38 +332,39 @@ async def update_password(request: Request, password_data: PasswordUpdate):
 @router.patch("/update-pin")
 async def update_pin(request: Request, pin_data: PinUpdate):
     user_id = get_user_session(request).get('id')
-    
- 
-    payload = {
-        "user_id": user_id,
-        "pin": pin_data.new_pin,
-        "rfid": get_user_session(request).get('credentials')[0].get('rfid_serial_number')}
-    
-    json_payload = json.dumps(payload)
-    
+
     try:
         user_cred = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).one()
 
         if not user_cred:
             raise HTTPException(status_code=404, detail="User credentials not found")
-        
+
         if str(pin_data.current_pin) != str(user_cred.pin_number):
             raise HTTPException(status_code=400, detail="Incorrect current PIN")
-        
+
         # Update the PIN in the UserCredential model
         user_cred.pin_number = pin_data.new_pin
-        
+
         # Commit the changes to the database
         db_session.commit()
 
-        mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
+        # Send credential update to ESP32 with correct data from database
+        relay_pin = user_cred.locker.relay_pin if user_cred.locker else 15
+        publish_credential_update(
+            user_id=user_id,
+            pin=pin_data.new_pin,
+            rfid=user_cred.rfid_serial_number,
+            relay_pin=relay_pin,
+            is_active=user_cred.is_active
+        )
+
         request.session.get("user")['credentials'][0]['pin_number'] = pin_data.new_pin
-        
+
         # Log the PIN update action
         log_history(user_id=user_id, action="Update PIN Number")
         user = get_user_by_id(user_id)
         notify_pin_change(user.email)
-        
+
         return JSONResponse(content={"message": "PIN updated successfully"}, status_code=200)
     except HTTPException as he:
         db_session.rollback()
