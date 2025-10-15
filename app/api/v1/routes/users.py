@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import time
 import traceback
@@ -9,12 +10,15 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from app.core.config import get_supabase_client, templates
 from app.models.schemas import *
-from app.services.admin_service import get_user_by_id, get_user_creds, get_user_creds_by_user_id, get_user_locker_info, get_user_session, is_super_admin
+from app.services.admin_service import get_user_by_id, get_user_creds, get_user_creds_by_user_id, get_user_locker_info, get_user_session, is_super_admin, update_user_hash_password
 from app.services.history_logs import log_history
 from app.models.database import *
 from app.models.models import *
-from app.services.mqtt import mqtt_client
+from app.services.mqtt import mqtt_client, is_globally_locked, get_lockdown_status, set_web_lockdown, publish_credential_update
 from datetime import datetime, timedelta
+
+from app.services.notification import notify_password_change, notify_pin_change
+from app.services.hash_password import hash_password, verify_password
 
 
 
@@ -108,7 +112,7 @@ def publish_lockout(request: PinLockoutRequest):
     try:
         mqtt_payload = {
             "user_id": str(request.user_id),
-            "lockout_duration": 120  
+            "lockout_duration": 120
         }
         mqtt_client.publish("locker/validate_pin", json.dumps(mqtt_payload))
 
@@ -116,14 +120,34 @@ def publish_lockout(request: PinLockoutRequest):
     except Exception as e:
         print("Error publishing to MQTT:", e)
 
+@router.get("/lockdown-status")
+def get_lockdown_status_endpoint():
+    """Get current system lockdown status"""
+    return get_lockdown_status()
+
 failed_attempts = {} 
 
 @router.post('/validate-pin')
 async def validate_pin(request: Request, pin_request: PinValidationRequest):
     user_id = pin_request.user_id
+
+    # Check global lockdown first
+    if is_globally_locked():
+        lockdown_status = get_lockdown_status()
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "valid": False,
+                "message": f"System is locked ({lockdown_status['source']}). Please try again later",
+                "cooldown": lockdown_status["remaining_seconds"],
+                "remaining_attempts": 0,
+                "lockdown_source": lockdown_status["source"]
+            }
+        )
+
     user_cred = get_user_creds_by_user_id(user_id)
 
-    # Check cooldown
+    # Check individual user cooldown
     if user_cred and user_cred.attempt_duration and datetime.now() < user_cred.attempt_duration:
         remaining_time = (user_cred.attempt_duration - datetime.now()).seconds
         raise HTTPException(
@@ -172,11 +196,14 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
         lockout_time = datetime.now() + timedelta(seconds=120)
         failed_attempts[user_id]['lockout_time'] = lockout_time
 
-        # You can also update DB cooldown here if needed
+        # Set global lockdown from web
+        set_web_lockdown(user_id, 120)
+
+        # Update individual user DB cooldown
         if user_cred:
             user_cred.attempt_duration = lockout_time
             try:
-                db_session.commit()  # assuming db_session is accessible
+                db_session.commit()
             except Exception as e:
                 db_session.rollback()
                 print("DB commit error:", e)
@@ -194,9 +221,10 @@ async def validate_pin(request: Request, pin_request: PinValidationRequest):
             status_code=400,
             detail={
                 "valid": False,
-                "message": "Too many failed attempts. Please try again in 2 minutes",
+                "message": "Too many failed attempts. System locked for 2 minutes",
                 "cooldown": 120,
-                "remaining_attempts": 0
+                "remaining_attempts": 0,
+                "lockdown_source": "web"
             }
         )
 
@@ -257,40 +285,42 @@ async def update_profile(request: Request, profile_data: ProfileUpdate):
 async def update_password(request: Request, password_data: PasswordUpdate):
     user_id = get_user_session(request).get('id')
     supabase = get_supabase_client()
-    try:
-        # Fetch the user from the database
-        user = get_user_by_id(user_id)
+    user = get_user_by_id(user_id)
+
+    try:        
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        print(password_data)
+        if not verify_password(password_data.current_password, user.hashed_password):
+            return JSONResponse(content={"message": "Invalid current password"}, status_code=400)
+            
         
-        # Get the user's email
+        
         user_email = user.email
-        
-        # Search for the user in Supabase by email
+
+        # Find user in Supabase
         supabase_users = supabase.auth.admin.list_users()
         supabase_user = next((u for u in supabase_users if u.email == user_email), None)
-        
+
         if not supabase_user:
             raise HTTPException(status_code=404, detail="User not found in Supabase")
-        
-        # Update password using Supabase
-        try:
-            response = supabase.auth.admin.update_user_by_id(
-                supabase_user.id,
-                {"password": password_data.new_password}
-            )
-            
-            # If we reach this point, the update was successful
-            # Log the password change action
-            log_history(user_id=user_id, action="Password updated")
-            
-            return JSONResponse(content={"message": "Password updated successfully"}, status_code=200)
-        except Exception as supabase_error:
-            # If there's an exception, it means the update failed
-            raise HTTPException(status_code=400, detail=str(supabase_error))
-        
+
+        # Update the password
+        supabase.auth.admin.update_user_by_id(
+            supabase_user.id,
+            {"password": password_data.new_password}
+        )
+
+        # Log password update
+        log_history(user_id=user_id, action="Password updated")
+
+        # Send password change email
+        notify_password_change(user_email)
+        update_user_hash_password(user_id, password_data.new_password)
+
+        return JSONResponse(content={"message": "Password updated successfully"}, status_code=200)
+
     except HTTPException as he:
         raise he
     except Exception as e:
@@ -302,34 +332,39 @@ async def update_password(request: Request, password_data: PasswordUpdate):
 @router.patch("/update-pin")
 async def update_pin(request: Request, pin_data: PinUpdate):
     user_id = get_user_session(request).get('id')
- 
-    payload = {
-        "user_id": user_id,
-        "pin": pin_data.new_pin,
-        "rfid": get_user_session(request).get('credentials')[0].get('rfid_serial_number')}
-    
-    json_payload = json.dumps(payload)
-    
+
     try:
         user_cred = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).one()
+
         if not user_cred:
             raise HTTPException(status_code=404, detail="User credentials not found")
-        
+
         if str(pin_data.current_pin) != str(user_cred.pin_number):
             raise HTTPException(status_code=400, detail="Incorrect current PIN")
-        
+
         # Update the PIN in the UserCredential model
         user_cred.pin_number = pin_data.new_pin
-        
+
         # Commit the changes to the database
         db_session.commit()
 
-        mqtt_client.publish(os.getenv("MQTT_TOPIC"), json_payload)
+        # Send credential update to ESP32 with correct data from database
+        relay_pin = user_cred.locker.relay_pin if user_cred.locker else 15
+        publish_credential_update(
+            user_id=user_id,
+            pin=pin_data.new_pin,
+            rfid=user_cred.rfid_serial_number,
+            relay_pin=relay_pin,
+            is_active=user_cred.is_active
+        )
+
         request.session.get("user")['credentials'][0]['pin_number'] = pin_data.new_pin
-        
+
         # Log the PIN update action
         log_history(user_id=user_id, action="Update PIN Number")
-        
+        user = get_user_by_id(user_id)
+        notify_pin_change(user.email)
+
         return JSONResponse(content={"message": "PIN updated successfully"}, status_code=200)
     except HTTPException as he:
         db_session.rollback()
