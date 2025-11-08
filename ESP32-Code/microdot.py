@@ -717,14 +717,6 @@ class Microdot():
         self.shutdown_requested = False
         self.debug = False
         self.server = None
-        
-    @app.route('/lock_status')
-    def lock_status(req):
-    global locked_until_time
-    now = time.time()
-    remaining = max(0, int(locked_until_time - now)) if is_system_locked() else 0
-    return {"locked": is_system_locked(), "remaining": remaining}
-
 
     def route(self, url_pattern, methods=None):
         """Decorator that is used to register a function as a request handler
