@@ -10,6 +10,13 @@ from keypad_matrix import Keypad
 from umqtt.simple import MQTTClient
 from i2c_lcd import I2cLcd
 
+# ==== Disable WDT and Brownout to Prevent Boot Errors ====
+import esp
+esp.osdebug(None)  # Disable OS debug messages
+
+# Lower CPU frequency during boot to reduce power draw
+machine.freq(160000000)  # 160MHz instead of 240MHz (reduces brownout)
+
 # ==== Buzzer Setup ====
 BUZZER_PIN = 32                 
 # For 5V active buzzer module: HIGH = ON, LOW = OFF (most common)
@@ -27,8 +34,9 @@ def buzz(n=1, on_ms=120, off_ms=90):
             time.sleep_ms(off_ms)
 
 # Initial test beep after a small delay to ensure proper initialization
-time.sleep_ms(100)
+time.sleep_ms(300)  # Longer delay for power stabilization
 buzz(1, 500)  # Single long beep on startup
+time.sleep_ms(200)  # Additional stabilization time
 
 # ==== Configuration ====
 RELAY_GPIO_MAP = {15: Pin(15, Pin.OUT), 4: Pin(4, Pin.OUT)}
@@ -62,12 +70,18 @@ locked_until_time = 0
 i2c = I2C(0, scl=Pin(16), sda=Pin(17), freq=400000)
 lcd = None
 try:
-    lcd_addr = i2c.scan()[0]
-    lcd = I2cLcd(i2c, lcd_addr, 4, 20)
-    lcd.clear()
-    lcd.putstr("Initializing...")
-except:
-    print("LCD init failed")
+    time.sleep_ms(200)  # Give I2C bus time to stabilize
+    devices = i2c.scan()
+    if devices:
+        lcd_addr = devices[0]
+        lcd = I2cLcd(i2c, lcd_addr, 4, 20)
+        time.sleep_ms(100)  # Allow LCD to initialize
+        lcd.clear()
+        lcd.putstr("Initializing...")
+    else:
+        print("No I2C devices found")
+except Exception as e:
+    print("LCD init failed:", e)
 
 for relay in RELAY_GPIO_MAP.values():
     relay.value(1)
@@ -303,12 +317,11 @@ def connect_to_wifi():
             print("WiFi Connected:", ip)
             if lcd:
                 lcd.clear()
-                lcd.putstr(f"Connected:")
+                lcd.putstr(f"WiFi OK")
                 lcd.move_to(0, 1)
                 lcd.putstr(f"{ip}")
             buzz(1, 300)  # Success beep for WiFi connection
-            time.sleep(2)
-            show_default_display()
+            time.sleep(1)
             return True
         time.sleep(1)
 
@@ -651,15 +664,25 @@ def connect_mqtt():
             print("❌ MQTT error:", e)
 
     try:
+        if lcd:
+            lcd.clear()
+            lcd.putstr("Connecting MQTT...")
+
+        print("Connecting to MQTT broker...")
         mqtt_client = MQTTClient(client_id=MQTT_CLIENT_ID, server=MQTT_BROKER, port=MQTT_PORT,
                                  user=MQTT_USERNAME, password=MQTT_PASSWORD, ssl=True,
                                  ssl_params={"server_hostname": MQTT_BROKER}, keepalive=60)
         mqtt_client.set_callback(sub_cb)
+
+        # Connect with timeout protection
         mqtt_client.connect()
+        time.sleep_ms(500)  # Give connection time to establish
+
         mqtt_client.subscribe(MQTT_TOPIC_SUB)
         mqtt_client.subscribe(MQTT_TOPIC_VALIDATE_PIN)
         mqtt_client.subscribe(MQTT_TOPIC_LOCKDOWN)
         mqtt_client.subscribe(b"locker/sync_response")
+
         if lcd:
             lcd.clear()
             lcd.putstr("MQTT Connected")
@@ -679,6 +702,10 @@ def connect_mqtt():
         show_default_display()
     except Exception as e:
         print("MQTT connect failed:", e)
+        if lcd:
+            lcd.clear()
+            lcd.putstr("MQTT Failed")
+            time.sleep(1)
         mqtt_client = None
 
 # ==== Unified Loop ====
@@ -828,12 +855,48 @@ def web_reset_lockout(req):
         return {"status": "error", "message": str(e)}
 
 # ==== Start ====
-if connect_to_wifi():
-    sync_time()
-    connect_mqtt()
+print("=== BOOT SEQUENCE START ===")
+
+# Try WiFi connection
+wifi_connected = connect_to_wifi()
+
+if wifi_connected:
+    print("WiFi connected, syncing time...")
+    try:
+        sync_time()
+    except Exception as e:
+        print("Time sync failed:", e)
+
+    # Try MQTT but don't block if it fails
+    print("Attempting MQTT connection...")
+    try:
+        connect_mqtt()
+    except Exception as e:
+        print("MQTT failed during boot:", e)
+        if lcd:
+            lcd.clear()
+            lcd.putstr("MQTT Failed")
+            lcd.move_to(0, 1)
+            lcd.putstr("Continuing...")
+            time.sleep(2)
 else:
+    print("WiFi failed, starting AP mode...")
     start_ap()
 
+# Always show default display and start main loop
+print("Starting main operations...")
 show_default_display()
+
+# Start unified loop in background thread
+print("Starting unified loop thread...")
 _thread.start_new_thread(unified_loop, ())
-app.run(port=80)
+
+# Start web server (this blocks, must be last)
+print("Starting web server on port 80...")
+try:
+    app.run(port=80)
+except Exception as e:
+    print("Web server error:", e)
+    # If web server fails, keep system running with just the loop
+    while True:
+        time.sleep(1)
