@@ -80,6 +80,11 @@ async def settings_page(request: Request):
     return templates.TemplateResponse('settings.html', {'request': request, "user": user})
 
 
+@router.get('/contact-us')
+async def contact_us_page(request: Request):
+    return templates.TemplateResponse('contact-us.html', {'request': request})
+
+
 @router.get("/lockers")
 def locker_management_page(request: Request):
     return templates.TemplateResponse("lockers.html", {"request": request})
