@@ -67,7 +67,6 @@ async def register_user(user: schemas.RegisterUserRequest):
             CreateUser(
                 first_name=user.first_name,
                 last_name=user.last_name,
-                id_number=user.id_number,
                 address=user.address,
                 email=user.email.strip().lower(),
                 locker_number=None,
@@ -75,7 +74,8 @@ async def register_user(user: schemas.RegisterUserRequest):
                 pin_number=user.pin_number,
                 created_by=None,
                 is_super_admin=False,
-                is_active=False
+                is_active=False,
+                plain_password=user.password
             )
         except Exception as e:
             print(f"Error in CreateUser: {str(e)}")
@@ -119,7 +119,7 @@ async def reset_password(request: Request):
         raise HTTPException(status_code=400, detail="Missing token or password")
     
     email_from_token = JWTDecode(access_token)
-    try:        
+    try:              
         init_reset_password(access_token, new_password)
         if get_user_by_email(email_from_token.get("email", None)):
             log_history(user_id=get_user_by_email(email_from_token.get("email", None)).id, action="Update Email Password")

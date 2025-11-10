@@ -38,7 +38,7 @@
                     {% else %}
                         Anonymous User
                     {% endif %}
-                    <p style="font-weight:normal; font-size: small;">{{ request.session['user']['email'] }}</p>
+                    <!-- <p style="font-weight:normal; font-size: small;">{{ request.session['user']['email'] }}</p> -->
                 </div>
             </div>
             
@@ -58,6 +58,7 @@
             {% endif %}
             {% if not request.session['user'].get('is_super_admin') %}
                 <a href="/settings" class="nav-link" data-page="settings"><i class="fa-solid fa-gear"></i><span class="nav-text">Settings</span></a>
+                <a href="/contact-us" class="nav-link" data-page="contact-us"><i class="fa-solid fa-envelope"></i><span class="nav-text">Contact Us</span></a>
             {% endif %}
 
 

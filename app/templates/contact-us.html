@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<style>
+    .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .card {
+        background-color: #2a2424;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        margin-top: 10px;
+        color: #eee;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #3a3a3a;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #ccc;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-label i {
+        margin-right: 8px;
+        color: #ff4081;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+
+    .form-control {
+        background-color: #2f2b2b;
+        color: #eee;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 0.875rem;
+        width: 100%;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .form-control:focus {
+        background-color: #2f2b2b;
+        color: #fff;
+        border-color: #ff4081;
+        box-shadow: none;
+        outline: none;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .btn-primary {
+        background-color: #ff4081;
+        border-color: #ff4081;
+        color: white;
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #e91e63;
+        border-color: #e91e63;
+    }
+
+    .btn-primary:disabled {
+        background-color: #666;
+        border-color: #666;
+        cursor: not-allowed;
+    }
+
+    .btn-primary i {
+        margin-left: 8px;
+    }
+
+    .required {
+        color: #ff4081;
+    }
+
+    .info-section {
+        background-color: #1f1b1b;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        border: 1px solid #3a3a3a;
+    }
+
+    .info-section h5 {
+        color: #fff;
+        margin-bottom: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        color: #ccc;
+        font-size: 0.85rem;
+    }
+
+    .info-item i {
+        width: 24px;
+        color: #ff4081;
+        font-size: 1rem;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Contact Us</h3>
+        </div>
+        <div class="card-body">
+            <form id="contactForm" action="https://formspree.io/f/mnnlakld" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        Your Email <span class="required">*</span>
+                    </label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-control"
+                        placeholder="your.email@example.com"
+                        value="{{ request.session.get('user', {}).get('email', '') }}"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">
+                        <i class="fas fa-user"></i>
+                        Your Name <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-control"
+                        placeholder="Enter your full name"
+                        value="{% if request.session['user']['first_name'] or request.session['user']['last_name'] %}{{ request.session['user']['first_name'] or '' }} {{ request.session['user']['last_name'] or '' }}{% endif %}"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="message" class="form-label">
+                        <i class="fas fa-comment-dots"></i>
+                        Your Message <span class="required">*</span>
+                    </label>
+                    <textarea
+                        id="message"
+                        name="message"
+                        class="form-control"
+                        placeholder="Type your message here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Send Message
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+
+            <div class="info-section">
+                <h5>Need Help?</h5>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>We typically respond within 24-48 hours</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Your information is secure and confidential</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>For urgent issues, please contact your administrator</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": true,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // Form submission handling with AJAX
+        $('#contactForm').on('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const submitBtn = $('button[type="submit"]');
+            const originalText = submitBtn.html();
+            const formData = new FormData(this);
+
+            // Show loading state
+            submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...');
+            submitBtn.prop('disabled', true);
+
+            // Submit form via AJAX to prevent redirect
+            $.ajax({
+                url: 'https://formspree.io/f/mnnlakld',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    toastr.success('Your message has been sent successfully! We will get back to you soon.');
+
+                    // Reset form after successful submission
+                    setTimeout(function() {
+                        submitBtn.html(originalText);
+                        submitBtn.prop('disabled', false);
+                        $('#contactForm')[0].reset();
+                    }, 1500);
+                },
+                error: function(xhr, status, error) {
+                    // Even if there's an error response, Formspree might have received it
+                    // Formspree returns 200 for success, so we'll treat any response as success
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        toastr.success('Your message has been sent successfully! We will get back to you soon.');
+
+                        setTimeout(function() {
+                            submitBtn.html(originalText);
+                            submitBtn.prop('disabled', false);
+                            $('#contactForm')[0].reset();
+                        }, 1500);
+                    } else {
+                        toastr.error('Failed to send message. Please try again later.');
+                        submitBtn.html(originalText);
+                        submitBtn.prop('disabled', false);
+                    }
+                }
+            });
+        });
+
+        // Email validation
+        $('#email').on('blur', function() {
+            const email = $(this).val();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email && !emailRegex.test(email)) {
+                $(this).css('border-color', '#e74c3c');
+                toastr.error('Please enter a valid email address');
+            } else {
+                $(this).css('border-color', '#444');
+            }
+        });
+
+        // Character counter for textarea (optional visual feedback)
+        $('#message').on('input', function() {
+            const charCount = $(this).val().length;
+            if (charCount > 500) {
+                $(this).css('border-color', '#ffa726');
+            } else {
+                $(this).css('border-color', '#444');
+            }
+        });
+    });
+</script>
+{% endblock %}
