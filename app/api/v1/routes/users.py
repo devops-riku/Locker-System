@@ -64,6 +64,11 @@ async def new_password_page(request: Request):
     return templates.TemplateResponse('new-password.html', {'request': request})
 
 
+@router.get('/change-pin')
+async def change_pin_page(request: Request):
+    return templates.TemplateResponse('change-pin.html', {'request': request})
+
+
 @router.get('/history')
 async def history_page(request: Request):
     return templates.TemplateResponse('history-logs.html', {'request': request})

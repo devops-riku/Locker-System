@@ -3,10 +3,16 @@ from fastapi import APIRouter, HTTPException, Request
 from app.core.config import get_supabase_client
 from app.core.config import templates
 from app.models import schemas
+from itsdangerous import SignatureExpired, BadSignature
+from app.models.database import db_session
+from app.models.models import User, UserCredential
 from app.services.admin_service import CreateUser, RegisterUser, get_user_by_email, serialize_user
 from app.services.auth_service import create_auth_user, init_reset_password, send_reset_password_link
 from app.services.history_logs import log_history
 from app.services.jwt_decode import JWTDecode
+from app.services.mqtt import publish_credential_update
+from app.services.notification import notify_pin_change
+from app.services.pin_token import verify_pin_change_token
 
 router = APIRouter()
 
@@ -82,7 +88,7 @@ async def register_user(user: schemas.RegisterUserRequest):
             raise HTTPException(status_code=500, detail=f"Error in creating user: {str(e)}")
 
 
-        return {"message": "Registration Successful!"}
+        return {"message": "Sign up successful! Please wait for admin approval to activate your account."}
     
     except Exception as e:
         # Catch any unhandled exception that might happen during the process
@@ -119,10 +125,61 @@ async def reset_password(request: Request):
         raise HTTPException(status_code=400, detail="Missing token or password")
     
     email_from_token = JWTDecode(access_token)
-    try:              
+    try:
         init_reset_password(access_token, new_password)
         if get_user_by_email(email_from_token.get("email", None)):
             log_history(user_id=get_user_by_email(email_from_token.get("email", None)).id, action="Update Email Password")
         return {"message": "Password updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# For Changing PIN via activation email token (no login required)
+@router.post("/change-pin-with-token")
+async def change_pin_with_token(request: Request):
+    data = await request.json()
+    token = data.get("token")
+    new_pin = data.get("new_pin")
+
+    if not token or not new_pin:
+        raise HTTPException(status_code=400, detail="Missing token or new PIN")
+
+    if len(new_pin) != 4 or not new_pin.isdigit():
+        raise HTTPException(status_code=400, detail="PIN must be exactly 4 digits")
+
+    try:
+        user_id = verify_pin_change_token(token)
+    except SignatureExpired:
+        raise HTTPException(status_code=400, detail="This link has expired. Please contact your administrator.")
+    except BadSignature:
+        raise HTTPException(status_code=400, detail="Invalid or tampered link.")
+
+    user = db_session.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_cred = db_session.query(UserCredential).filter(UserCredential.user_id == user_id).first()
+    if not user_cred:
+        raise HTTPException(status_code=404, detail="User credentials not found")
+
+    try:
+        user_cred.pin_number = new_pin
+        db_session.commit()
+
+        relay_pin = user_cred.locker.relay_pin if user_cred.locker else 15
+        publish_credential_update(
+            user_id=user_id,
+            pin=new_pin,
+            rfid=user_cred.rfid_serial_number,
+            relay_pin=relay_pin,
+            is_active=user_cred.is_active
+        )
+
+        log_history(user_id=user_id, action="PIN changed via activation link")
+        notify_pin_change(user.email)
+
+        return {"message": "PIN updated successfully"}
+
+    except Exception as e:
+        db_session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating PIN: {str(e)}")

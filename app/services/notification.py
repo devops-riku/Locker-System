@@ -41,6 +41,20 @@ def notify_password_change(to_email: str):
     """
     return send_email_notification(to_email, subject, html)
 
-# Example usage (remove these lines in production)
-# notify_pin_change("egermino.riku@gmail.com")
-# notify_password_change("egermino.riku@gmail.com")
+# 3. Account activation notification
+def notify_account_activated(to_email: str, current_pin: str):
+    subject = "Your Account Has Been Activated"
+    html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2c3e50;">Your Account is Activated</h2>
+            <p>Hello,</p>
+            <p>Your <strong>My Locker</strong> account has been successfully activated.</p>
+            <p>Below is your Locker PIN. Please keep it safe and do not share it with anyone.</p>
+            <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+                <p style="margin: 0; font-size: 14px; color: #6c757d;">Your Locker PIN</p>
+                <p style="margin: 5px 0 0; font-size: 28px; font-weight: bold; letter-spacing: 8px; color: #2c3e50;">{current_pin}</p>
+            </div>
+            <p style="color: #6c757d; font-size: 12px;">If you did not request this activation, please contact your administrator.</p>
+        </div>
+    """
+    return send_email_notification(to_email, subject, html)

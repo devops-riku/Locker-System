@@ -101,3 +101,8 @@ class RegisterUserRequest(BaseModel):
 class SetAccountActiveRequest(BaseModel):
     user_id: int
     is_active: bool
+
+
+class PinChangeWithToken(BaseModel):
+    token: str
+    new_pin: str = Field(..., max_length=4)

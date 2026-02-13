@@ -14,6 +14,8 @@ from datetime import datetime
 import pytz
 from app.services.history_logs import log_history
 from app.services.mqtt import mqtt_client, publish_credential_update
+from app.services.notification import notify_account_activated
+
 
 from app.services.utc_converter import utc_to_ph
 
@@ -273,9 +275,9 @@ async def register_super_admin(super_admin: SuperAdminCreate):
 
     # Create authentication user and super admin
     create_auth_user(super_admin.email, super_admin.password)
-    CreateUser(first_name="Super Admin", email=super_admin.email, is_super_admin=True)
+    CreateUser(first_name="Admin", email=super_admin.email, is_super_admin=True)
 
-    return {"message": "Super admin created successfully."}
+    return {"message": "Admin created successfully."}
 
    
 
@@ -322,10 +324,16 @@ async def set_account_active(request: Request, data: SetAccountActiveRequest):
         
         # Update the user's active status
         user.is_active = data.is_active
-        
+
         # Commit the changes to the database
         db_session.commit()
-        
+
+        # Send activation email with Locker PIN
+        if data.is_active:
+            user_cred = db_session.query(UserCredential).filter_by(user_id=user.id).first()
+            current_pin = user_cred.pin_number if user_cred else "N/A"
+            notify_account_activated(user.email, current_pin)
+
         return {"message": f"Account status for user {user.email} has been updated to {data.is_active}."}
 
     

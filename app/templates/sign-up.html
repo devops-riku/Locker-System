@@ -290,7 +290,7 @@
                     <div class="form-group">
                         <label for="pin">4-Digit PIN <span class="text-danger">*</span></label>
                         <div class="password-input-wrapper">
-                            <input disabled type="password" class="form-control" id="pin" placeholder="Enter a 4-digit PIN" maxlength="4" pattern="[0-9]{4}" value="0123" required />
+                            <input disabled type="password" class="form-control" id="pin" placeholder="Enter a 4-digit PIN" maxlength="4" pattern="[0-9]{4}" required />
                             <i class="fas fa-eye toggle-password" onclick="togglePassword('pin', this)" title="Show/Hide PIN"></i>
                         </div>
                     </div>
@@ -356,6 +356,9 @@
             }, 200);
         }
 
+        // Generate a random 4-digit PIN on page load
+        document.getElementById('pin').value = String(Math.floor(1000 + Math.random() * 9000));
+
         function validatePassword(password) {
             const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
             return regex.test(password);
@@ -420,12 +423,12 @@
                 pin_number: pin
             })
             .then(response => {
-                toastr.success(response.data.message || "Registration successful! Redirecting to login...");
+                toastr.success(response.data.message || "Sign up successful! Please wait for admin approval to activate your account.");
                 signUpButton.innerHTML = '<i class="fas fa-check"></i> Account Created!';
-                
+
                 setTimeout(() => {
                     window.location.href = '/login';
-                }, 2000);
+                }, 3000);
             })
             .catch(error => {
                 let errorMessage = 'An error occurred during registration. Please try again.';
